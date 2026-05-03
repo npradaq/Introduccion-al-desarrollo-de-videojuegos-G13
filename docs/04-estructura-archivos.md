@@ -135,8 +135,6 @@ Introduccion-al-desarrollo-de-videojuegos-G13/
 ├── main.spec                             # pyinstaller (se genera al buildar)
 ├── requirements.txt
 ├── README.md
-├── requerimientos.md
-├── rubricas.md
 └── .gitignore
 ```
 

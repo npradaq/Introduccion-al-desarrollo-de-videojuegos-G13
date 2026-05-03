@@ -1,0 +1,44 @@
+{
+    "star_colors": [
+        {
+            "r": 213,
+            "g": 0,
+            "b": 0
+        },
+        {
+            "r": 118,
+            "g": 255,
+            "b": 3
+        },
+        {
+            "r": 65,
+            "g": 105,
+            "b": 225
+        }
+    ],
+    "stars_number": 50,
+    "stars_parallax_factor": 1.0,
+    "stars_blink_rate": {
+        "min": 0.25,
+        "max": 0.5
+    },
+    "planet_terrain_colors": [
+        {
+            "r": 255,
+            "g": 90,
+            "b": 90
+        },
+        {
+            "r": 118,
+            "g": 255,
+            "b": 118
+        },
+        {
+            "r": 120,
+            "g": 120,
+            "b": 225
+        }
+    ],
+    "planet_terrain_line_points": 50,
+    "planet_parallax_factor": 1.25
+}

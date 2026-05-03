@@ -1,0 +1,13 @@
+{
+    "title": "MISO - Planet savior!",
+    "size": {
+        "w": 320,
+        "h": 256
+    },
+    "bg_color": {
+        "r": 25,
+        "g": 25,
+        "b": 25
+    },
+    "framerate": 60
+}
