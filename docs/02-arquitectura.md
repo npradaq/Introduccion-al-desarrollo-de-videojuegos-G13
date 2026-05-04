@@ -65,12 +65,13 @@ class Scene:                       # base
     def draw(self, screen): ...
 ```
 
-| Escena            | Propósito                                                       |
-|-------------------|-----------------------------------------------------------------|
-| `MenuScene`       | Título, instrucciones, "Presiona ENTER para jugar".             |
-| `PlayScene`       | Gameplay: world, sistemas, HUD.                                 |
-| `GameOverScene`   | Texto GAME OVER, vuelve a `MenuScene` o reinicia.               |
-| `WinScene`        | Pantalla de victoria al terminar el nivel.                      |
+| Escena              | Propósito                                                       |
+|---------------------|-----------------------------------------------------------------|
+| `MenuScene`         | Título, instrucciones, "Presiona ENTER para jugar".             |
+| `PlayScene`         | Gameplay: world, sistemas, HUD.                                 |
+| `GameOverScene`     | Texto GAME OVER, vuelve a `MenuScene` o reinicia.               |
+| `WinScene`          | Pantalla de victoria al terminar el nivel.                      |
+| `AttractionScene`   | *(bonus)* El juego se "juega solo" como demo; funciona de forma completamente distinta a `PlayScene`. Confirmada por el profesor como escena independiente propia. |
 
 Cada escena instancia su propio `esper.World`. Los recursos (sprites,
 sonidos) **se comparten** vía `ServiceLocator` (cache global por path).
@@ -95,6 +96,7 @@ La capa de juego propiamente dicha.
 | `CParallax`             | `factor: float` (0.0–1.0 según capa)                     |
 | `CPlanet`               | lista de segmentos `[(x1,y1),(x2,y2)]` generada aleatoria |
 | `CStarfield`            | densidad, paleta, capa parallax                          |
+| `CAttachTo`             | `parent_id: int`, `offset: Vector2` — ancla una entidad a otra (propulsor de la nave, astronauta capturado/rescatado). Si el padre desaparece, la entidad hija reacciona (cae, etc.) |
 | `CLifetime`             | `time_left: float`                                       |
 | `CScore`                | `value: int`                                             |
 | `CLives` *(bonus)*      | `count: int`, `extra_threshold: int`                     |
@@ -128,12 +130,13 @@ La capa de juego propiamente dicha.
 17. system_rescue_astronaut      (player recoge / deposita)
 18. system_explosion             (vida limitada de explosiones)
 19. system_particle_explosion    (partículas con CLifetime)
-20. system_animation             (avance de frames)
-21. system_score                 (aplica deltas de puntuación)
-22. system_camera         (bonus, scroll direccional)
-23. system_minimap        (bonus, posiciones relativas)
-24. system_smart_bomb     (bonus)
-25. world._clear_dead_entities()
+20. system_attach_to             (sincroniza posición de entidades ancladas via CAttachTo)
+21. system_animation             (avance de frames)
+22. system_score                 (aplica deltas de puntuación)
+23. system_camera         (bonus, scroll direccional)
+24. system_minimap        (bonus, posiciones relativas)
+25. system_smart_bomb     (bonus)
+26. world._clear_dead_entities()
 ```
 
 **Render** (en `draw`):
@@ -210,8 +213,8 @@ Carga centralizada en `GameEngine._create()` o en `Scene.on_enter()`.
 | Inercia                                                | `CVelocity` + `s_movement` + fricción en `s_player_state` |
 | Wraparound horizontal mundo / vertical enemigos        | `s_wraparound`                                       |
 | Lander                                                 | `CLanderState` + `s_lander_state`                    |
-| Captura + Mutant                                       | `s_capture_astronaut` + `prefab_creator.create_mutant`|
-| Astronautas en suelo                                   | `CAstronautState` + `s_astronaut_state`              |
+| Captura + Mutant                                       | `s_capture_astronaut` + `prefab_creator.create_mutant` + `CAttachTo`|
+| Astronautas en suelo (movimiento orgánico)             | `CAstronautState` + `s_astronaut_state` + Perlin Noise|
 | Disparo enemigo                                        | `s_enemy_fire`                                       |
 | Colisiones (4 tipos)                                   | 4 sistemas `s_collision_*`                           |
 | Pausa                                                  | flag en `PlayScene`, oculta sprites con tag         |
@@ -224,6 +227,7 @@ Carga centralizada en `GameEngine._create()` o en `Scene.on_enter()`.
 | Publicación itch.io                                    | build con `pygbag`                                   |
 | **(Bonus) Minimapa**                                   | `CMinimap` + `s_minimap_render`                      |
 | **(Bonus) Vidas**                                      | `CLives` + lógica en `GameOverScene` y `s_score`     |
+| **(Bonus) Modo atracción**                             | `AttractionScene` (escena propia, no variante de `PlayScene`) |
 
 ---
 

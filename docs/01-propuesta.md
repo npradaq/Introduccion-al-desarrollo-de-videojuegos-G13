@@ -22,7 +22,12 @@
 > servicios menores, pulido de un sistema, scripts de build) registrada
 > mediante commits propios. Ver `docs/05-plan-trabajo.md`.
 
-**Repositorio público:** https://github.com/npradaq/Introduccion-al-desarrollo-de-videojuegos-G13/
+**Repositorio:** https://github.com/npradaq/Introduccion-al-desarrollo-de-videojuegos-G13/
+
+> **Acceso para evaluadores:** el repositorio puede configurarse como privado.
+> Agregar los GitHub de monitores y profesor como colaboradores via Slack
+> (instrucción dada en clase) para que puedan revisar el código en la entrega
+> final.
 
 ---
 

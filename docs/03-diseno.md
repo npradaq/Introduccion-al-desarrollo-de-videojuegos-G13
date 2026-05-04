@@ -49,6 +49,9 @@ como secundaria.
 - Velocidad máxima horizontal y vertical separadas (configurable).
 - **Sin cámara (default):** el jugador siempre en el centro de pantalla;
   el mundo se mueve en sentido inverso.
+- El **propulsor** (fuego trasero de la nave) es una entidad separada
+  anclada al jugador mediante `CAttachTo`, con un `offset` fijo hacia
+  atrás. Se activa/desactiva según el estado de movimiento del jugador.
 
 ### 4.2 Disparo del jugador
 - Láser que cubre toda la pantalla en su dirección de avance.
@@ -65,18 +68,23 @@ como secundaria.
   multi-capa).
 
 ### 4.4 Planeta procedural
-- Línea quebrada generada aleatoriamente al iniciar la partida.
+- Línea quebrada generada aleatoriamente al iniciar la partida usando
+  **Perlin Noise** para lograr un terreno orgánico y suavizado.
 - Parámetros: número de segmentos, altura mínima/máxima, suavizado.
 - Los astronautas caminan **debajo** de la línea, sobre la superficie del
   planeta. Ni jugador ni enemigos colisionan con la línea.
 
 ### 4.5 Astronautas
 - Cantidad inicial fija por nivel (10 en el original).
-- Caminan lentamente en horizontal sobre el suelo.
+- Caminan lentamente en horizontal sobre el suelo con movimiento orgánico
+  generado con **Perlin Noise** (bajo costo dado el número reducido de
+  entidades).
 - **Estados** (`CAstronautState`): IDLE > WALKING > CAPTURED > FALLING > RESCUED.
-- Si el Lander que lo lleva muere a media altura, el astronauta cae con
-  gravedad. Si cae desde muy alto sin ser rescatado, **muere** al impactar
-  el suelo.
+- Al ser capturado por un Lander o rescatado por el jugador, el astronauta
+  queda **anclado** a la entidad padre mediante `CAttachTo` (con `offset`
+  respecto al centro del padre). Si el padre desaparece, el astronauta pasa
+  al estado FALLING.
+- Si cae desde muy alto sin ser rescatado, **muere** al impactar el suelo.
 - Si el jugador atrapa un astronauta CAPTURED/FALLING, lo lleva consigo.
   Al depositarlo en el suelo gana puntos.
 
@@ -172,6 +180,9 @@ como secundaria.
 - **High Score**: tabla con score máximo configurable (inicial 21270).
 - **Múltiples olas**: 5+ niveles configurables, dificultad creciente.
 - **Modo atracción**: gameplay automático cuando nadie juega en menú.
+  Implementado como `AttractionScene` — escena propia independiente de
+  `PlayScene` (confirmado por el profesor: funciona de forma completamente
+  distinta).
 - **Fase 2**: cuando se pierden todos los astronautas, el mundo "explota"
   y cambia el gameplay.
 

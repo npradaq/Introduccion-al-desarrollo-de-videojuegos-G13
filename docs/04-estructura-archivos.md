@@ -84,6 +84,7 @@ Introduccion-al-desarrollo-de-videojuegos-G13/
 │       │   ├── c_parallax.py
 │       │   ├── c_planet.py
 │       │   ├── c_starfield.py
+│       │   ├── c_attach_to.py
 │       │   ├── c_lifetime.py
 │       │   ├── c_score.py
 │       │   ├── c_lives.py                # (bonus)
@@ -124,6 +125,7 @@ Introduccion-al-desarrollo-de-videojuegos-G13/
 │           ├── s_particle_explosion.py
 │           ├── s_enemy_spawner.py
 │           ├── s_enemy_fire.py
+│           ├── s_attach_to.py
 │           ├── s_capture_astronaut.py
 │           ├── s_rescue_astronaut.py
 │           ├── s_score.py
