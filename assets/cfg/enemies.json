@@ -1,0 +1,84 @@
+{
+    "Lander": {
+        "image": "assets/img/enemy_lander.png",
+        "sound_die": "assets/snd/enemy_die.ogg",
+        "sound_capture": "assets/snd/lander_capture_astronaut.ogg",
+        "sound_mutate": "assets/snd/lander_mutate_astronaut.ogg",
+        "animations": {
+            "number_frames": 1,
+            "list": [
+                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+            ]
+        },
+        "velocity_patrol": 40,
+        "velocity_descend": 60,
+        "velocity_abduct": 50,
+        "astronaut_detection_range": 120,
+        "fire_rate": 0.02,
+        "bullet_velocity": 80
+    },
+    "Mutant": {
+        "image": "assets/img/enemy_mutant.png",
+        "sound_die": "assets/snd/enemy_die.ogg",
+        "animations": {
+            "number_frames": 1,
+            "list": [
+                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+            ]
+        },
+        "velocity_chase": 90,
+        "fire_rate": 0.05,
+        "bullet_velocity": 100
+    },
+    "Baiter": {
+        "image": "assets/img/enemy_baiter.png",
+        "sound_die": "assets/snd/enemy_die.ogg",
+        "animations": {
+            "number_frames": 1,
+            "list": [
+                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+            ]
+        },
+        "velocity_chase": 150,
+        "fire_rate": 0.08,
+        "bullet_velocity": 120
+    },
+    "Pod": {
+        "image": "assets/img/enemy_pod.png",
+        "sound_die": "assets/snd/enemy_die.ogg",
+        "animations": {
+            "number_frames": 1,
+            "list": [
+                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+            ]
+        },
+        "velocity_patrol": 30,
+        "swarmer_count": 4
+    },
+    "Swarmer": {
+        "image": "assets/img/enemy_swarmer.png",
+        "sound_die": "assets/snd/enemy_die.ogg",
+        "animations": {
+            "number_frames": 1,
+            "list": [
+                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+            ]
+        },
+        "velocity_chase": 70,
+        "fire_rate": 0.01,
+        "bullet_velocity": 70
+    },
+    "Bomber": {
+        "image": "assets/img/enemy_bomber.png",
+        "sound_die": "assets/snd/enemy_die.ogg",
+        "animations": {
+            "number_frames": 1,
+            "list": [
+                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+            ]
+        },
+        "velocity_patrol": 35,
+        "bomb_drop_rate": 0.015,
+        "bomb_image": "assets/img/bomber_bomb.png"
+    }
+}

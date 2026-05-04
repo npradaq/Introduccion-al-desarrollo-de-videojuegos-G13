@@ -1,0 +1,14 @@
+{
+    "player_bullet": {
+        "color": { "r": 255, "g": 255, "b": 255 },
+        "size": { "w": 12, "h": 2 },
+        "velocity": 400,
+        "sound": "assets/snd/player_shoot.ogg",
+        "lifetime": 1.5
+    },
+    "enemy_bullet": {
+        "image": "assets/img/enemy_bullet.png",
+        "velocity": 100,
+        "lifetime": 3.0
+    }
+}

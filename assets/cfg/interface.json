@@ -1,18 +1,33 @@
 {
-    "title_text_color": {
-        "r": 255,
-        "g": 0,
-        "b": 0
+    "font": "assets/fnt/PressStart2P.ttf",
+    "title_text_color": { "r": 255, "g": 0, "b": 0 },
+    "normal_text_color": { "r": 255, "g": 255, "b": 255 },
+    "high_score_color": { "r": 30, "g": 144, "b": 255 },
+    "high_score_max_value": 1000,
+    "menu": {
+        "logo_image": "assets/img/game_logo.png",
+        "logo_position": { "x": 60, "y": 40 },
+        "instructions": [
+            { "text": "PRESS ENTER TO START", "size": 8, "position": { "x": 65, "y": 150 }, "color": { "r": 255, "g": 255, "b": 0 } },
+            { "text": "ARROWS TO MOVE", "size": 6, "position": { "x": 90, "y": 180 }, "color": { "r": 255, "g": 255, "b": 255 } },
+            { "text": "SPACE TO SHOOT", "size": 6, "position": { "x": 90, "y": 195 }, "color": { "r": 255, "g": 255, "b": 255 } },
+            { "text": "P TO PAUSE", "size": 6, "position": { "x": 110, "y": 210 }, "color": { "r": 255, "g": 255, "b": 255 } },
+            { "text": "ESC TO QUIT", "size": 6, "position": { "x": 110, "y": 225 }, "color": { "r": 255, "g": 255, "b": 255 } }
+        ]
     },
-    "normal_text_color": {
-        "r": 255,
-        "g": 255,
-        "b": 255
+    "hud": {
+        "score_label": { "text": "SCORE", "size": 8, "position": { "x": 8, "y": 4 }, "color": { "r": 255, "g": 255, "b": 0 } },
+        "score_value": { "text": "0", "size": 8, "position": { "x": 8, "y": 16 }, "color": { "r": 255, "g": 255, "b": 255 } }
     },
-    "high_score_color": {
-        "r": 30,
-        "g": 144,
-        "b": 255
+    "pause": {
+        "text": "PAUSED",
+        "size": 16,
+        "color": { "r": 255, "g": 255, "b": 255 },
+        "blink_rate": 2.0
     },
-    "high_score_max_value": 1000
+    "game_over": {
+        "text": "GAME OVER",
+        "size": 16,
+        "color": { "r": 255, "g": 0, "b": 0 }
+    }
 }

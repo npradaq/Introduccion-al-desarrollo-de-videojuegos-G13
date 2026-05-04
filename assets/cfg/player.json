@@ -1,0 +1,22 @@
+{
+    "image": "assets/img/player.png",
+    "burner_idle_image": "assets/img/player_burner_idle.png",
+    "burner_moving_image": "assets/img/player_burner_moving.png",
+    "sound_shoot": "assets/snd/player_shoot.ogg",
+    "sound_die": "assets/snd/player_die.ogg",
+    "animations": {
+        "number_frames": 1,
+        "list": [
+            { "name": "IDLE", "start": 0, "end": 0, "framerate": 1 }
+        ]
+    },
+    "burner_animations": {
+        "number_frames": 1,
+        "list": [
+            { "name": "IDLE", "start": 0, "end": 0, "framerate": 1 }
+        ]
+    },
+    "input_velocity": 120,
+    "max_velocity": 180,
+    "burner_offset": { "x": -8, "y": 0 }
+}
