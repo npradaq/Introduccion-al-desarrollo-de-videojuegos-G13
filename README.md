@@ -83,6 +83,14 @@ pip install -r requirements.txt
 python main.py
 ```
 
+**Escalado para desarrollo local** (resolución 320×256 es pequeña para pantallas modernas):
+```bash
+python main.py --scale 3        # Escalado 3x (960×768)
+python main.py -s 2              # Escalado 2x (640×512) — forma corta
+```
+
+Sin flag, se ejecuta a la resolución original 320×256.
+
 ---
 
 ## Build para itch.io (web)

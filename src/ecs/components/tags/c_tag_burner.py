@@ -1,0 +1,2 @@
+class CTagBurner:
+    pass

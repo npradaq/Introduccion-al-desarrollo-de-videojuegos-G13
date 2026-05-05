@@ -1,0 +1,15 @@
+{
+    "player_spawn": {
+        "position": { "x": 160, "y": 128 }
+    },
+    "world": {
+        "width": 1600
+    },
+    "astronauts_count": 10,
+    "fanfare_sound": "assets/snd/game_start.ogg",
+    "enemy_spawn_events": [
+        { "time": 2.0, "enemy_type": "Lander", "position": { "x": 100, "y": 50 } },
+        { "time": 4.0, "enemy_type": "Lander", "position": { "x": 250, "y": 60 } },
+        { "time": 7.0, "enemy_type": "Lander", "position": { "x": 50, "y": 40 } }
+    ]
+}
