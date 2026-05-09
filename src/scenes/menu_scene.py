@@ -1,8 +1,9 @@
 import pygame
 
-from src.engine.config_loader import load_interface_config
+from src.create.prefab_creator import create_image, create_text
+from src.engine.scene import Scene
 from src.engine.service_locator import ServiceLocator
-from src.scenes.scene import Scene
+from src.ecs.systems.s_rendering import system_rendering
 
 
 class MenuScene(Scene):
@@ -15,10 +16,29 @@ class MenuScene(Scene):
 
     def on_enter(self, payload: dict | None = None) -> None:
         if not self._loaded:
-            self.interface_cfg = load_interface_config(
+            self.interface_cfg = ServiceLocator.config_service.get(
                 "assets/cfg/interface.json"
             )
             self._loaded = True
+
+        self.world.clear_database()
+        menu = self.interface_cfg.get("menu", {})
+        font_path = self.interface_cfg.get("font", "")
+
+        logo_path = menu.get("logo_image")
+        if logo_path:
+            logo_pos = menu.get("logo_position", {"x": 0, "y": 0})
+            create_image(self.world, logo_path, logo_pos)
+
+        for instr in menu.get("instructions", []):
+            create_text(
+                self.world,
+                instr["text"],
+                font_path,
+                instr["size"],
+                instr["color"],
+                instr["position"]
+            )
 
     def process_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key in (
@@ -30,21 +50,4 @@ class MenuScene(Scene):
         pass
 
     def draw(self, screen: pygame.Surface) -> None:
-        menu = self.interface_cfg.get("menu", {})
-        font_path = self.interface_cfg.get("font", "")
-
-        logo_path = menu.get("logo_image")
-        if logo_path:
-            logo = ServiceLocator.images_service.get(logo_path)
-            logo_pos = menu.get("logo_position", {"x": 0, "y": 0})
-            screen.blit(logo, (logo_pos["x"], logo_pos["y"]))
-
-        for instr in menu.get("instructions", []):
-            font = ServiceLocator.fonts_service.get(font_path, instr["size"])
-            color = instr["color"]
-            surf = font.render(
-                instr["text"], True,
-                (color["r"], color["g"], color["b"])
-            )
-            pos = instr["position"]
-            screen.blit(surf, (pos["x"], pos["y"]))
+        system_rendering(self.world, screen)
