@@ -7,6 +7,7 @@ class CSurface:
         self.surface.fill(color)
         self.area = self.surface.get_rect()
         self.color = color
+        self.visible = True
 
     @classmethod
     def from_surface(cls, surface: pygame.Surface) -> "CSurface":
@@ -14,4 +15,5 @@ class CSurface:
         instance.surface = surface
         instance.area = surface.get_rect()
         instance.color = pygame.Color(255, 255, 255)
+        instance.visible = True
         return instance

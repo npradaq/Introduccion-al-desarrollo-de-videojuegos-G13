@@ -1,14 +1,17 @@
 import pygame
 
 from src.create.prefab_creator import (
-    create_bullet_player, create_input_player, create_player, create_starfield
+    create_bullet_player, create_hud, create_input_player, create_input_scene,
+    create_pause_text, create_player, create_starfield
 )
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 from src.ecs.components.c_surface import CSurface
+from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_attach_to import system_attach_to
+from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_player_input import system_player_input
@@ -16,12 +19,8 @@ from src.ecs.systems.s_player_state import system_player_state
 from src.ecs.systems.s_rendering import system_rendering
 from src.ecs.systems.s_screen_bullet import system_screen_bullet
 from src.ecs.systems.s_screen_player_bounds import system_screen_player_bounds
-from src.engine.config_loader import (
-    load_bullets_config, load_interface_config, load_level_config,
-    load_player_config, load_world_config
-)
+from src.engine.scene import Scene
 from src.engine.service_locator import ServiceLocator
-from src.scenes.scene import Scene
 
 
 class PlayScene(Scene):
@@ -38,24 +37,29 @@ class PlayScene(Scene):
         self.world_config: dict = {}
         self.level_config: dict = {}
         self.interface_config: dict = {}
-        self._pause_blink_time = 0.0
+        self._pause_entity: int | None = None
 
     def on_enter(self, payload: dict | None = None) -> None:
         if not self._loaded:
-            self.player_config = load_player_config("assets/cfg/player.json")
-            self.bullets_config = load_bullets_config(
+            self.player_config = ServiceLocator.config_service.get(
+                "assets/cfg/player.json"
+            )
+            self.bullets_config = ServiceLocator.config_service.get(
                 "assets/cfg/bullets.json"
             )
-            self.world_config = load_world_config("assets/cfg/world.json")
-            self.level_config = load_level_config("assets/cfg/level_01.json")
-            self.interface_config = load_interface_config(
+            self.world_config = ServiceLocator.config_service.get(
+                "assets/cfg/world.json"
+            )
+            self.level_config = ServiceLocator.config_service.get(
+                "assets/cfg/level_01.json"
+            )
+            self.interface_config = ServiceLocator.config_service.get(
                 "assets/cfg/interface.json"
             )
             self._loaded = True
 
         self.world.clear_database()
         self.is_paused = False
-        self._pause_blink_time = 0.0
 
         create_starfield(
             self.world, self.world_config, self.screen_w, self.screen_h
@@ -70,21 +74,34 @@ class PlayScene(Scene):
         )
 
         create_input_player(self.world)
+        create_input_scene(self.world)
+        create_hud(self.world, self.interface_config)
+        self._pause_entity = create_pause_text(
+            self.world, self.interface_config, self.screen_w, self.screen_h
+        )
 
         fanfare = self.level_config.get("fanfare_sound")
         if fanfare:
             ServiceLocator.sounds_service.play(fanfare)
 
     def process_event(self, event: pygame.event.Event) -> None:
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-            self.is_paused = not self.is_paused
-            return
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
-            ServiceLocator.scenes_service.switch_to("MENU")
-            return
         system_player_input(self.world, event, self._do_action)
 
     def _do_action(self, c_input: CInputCommand) -> None:
+        if c_input.name == "PAUSE":
+            if c_input.phase == CommandPhase.START:
+                self.is_paused = not self.is_paused
+                if self._pause_entity is not None:
+                    c_text = self.world.component_for_entity(
+                        self._pause_entity, CText
+                    )
+                    c_text.visible = self.is_paused
+            return
+        elif c_input.name == "BACK_TO_MENU":
+            if c_input.phase == CommandPhase.START:
+                ServiceLocator.scenes_service.switch_to("MENU")
+            return
+
         if self.is_paused or self.player_velocity is None:
             return
         speed = self.player_config["input_velocity"]
@@ -133,7 +150,7 @@ class PlayScene(Scene):
 
     def update(self, dt: float) -> None:
         if self.is_paused:
-            self._pause_blink_time += dt
+            system_blink(self.world, dt)
             return
 
         system_movement(self.world, dt)
@@ -151,41 +168,4 @@ class PlayScene(Scene):
         self.world._clear_dead_entities()
 
     def draw(self, screen: pygame.Surface) -> None:
-        system_rendering(self.world, screen, hide_player=self.is_paused)
-
-        hud_cfg = self.interface_config.get("hud", {})
-        font_path = self.interface_config.get("font", "")
-        for key in ("score_label", "score_value"):
-            cfg = hud_cfg.get(key)
-            if cfg is None:
-                continue
-            font = ServiceLocator.fonts_service.get(font_path, cfg["size"])
-            text = cfg.get("text", "0")
-            color = cfg["color"]
-            surf = font.render(
-                text, True, (color["r"], color["g"], color["b"])
-            )
-            pos = cfg["position"]
-            screen.blit(surf, (pos["x"], pos["y"]))
-
-        if self.is_paused:
-            pause_cfg = self.interface_config.get("pause", {})
-            blink_rate = pause_cfg.get("blink_rate", 2.0)
-            visible = (self._pause_blink_time * blink_rate) % 2 < 1
-            if visible:
-                font = ServiceLocator.fonts_service.get(
-                    font_path, pause_cfg.get("size", 16)
-                )
-                color = pause_cfg.get(
-                    "color", {"r": 255, "g": 255, "b": 255}
-                )
-                surf = font.render(
-                    pause_cfg.get("text", "PAUSED"), True,
-                    (color["r"], color["g"], color["b"])
-                )
-                w, h = screen.get_size()
-                screen.blit(
-                    surf,
-                    ((w - surf.get_width()) // 2,
-                     (h - surf.get_height()) // 2)
-                )
+        system_rendering(self.world, screen)
