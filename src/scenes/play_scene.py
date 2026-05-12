@@ -18,6 +18,7 @@ from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
+from src.ecs.systems.s_enemy_wraparound import system_enemy_wraparound
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_player_input import system_player_input
@@ -269,6 +270,7 @@ class PlayScene(Scene):
         self._spawn_mutant_enemies(dt)
 
         system_movement(self.world, dt)
+        system_enemy_wraparound(self.world, self.screen_h)
         system_attach_to(self.world)
         system_parallax(
             self.world, self.player_velocity, self.screen_w, dt

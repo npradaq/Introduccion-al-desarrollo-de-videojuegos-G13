@@ -240,7 +240,7 @@ def create_lander_enemy(world: esper.World, lander_enemy_cfg: dict,
 
     entity = world.create_entity()
     world.add_component(entity, CTransform(position))
-    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
+    world.add_component(entity, CVelocity(pygame.Vector2(0, 10)))
     world.add_component(entity, CSurface.from_surface(surface))
     world.add_component(entity, CAnimation(lander_enemy_cfg["animations"]))
     world.add_component(entity, CTagLanderEnemy())
