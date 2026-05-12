@@ -5,7 +5,7 @@ import pygame
 from src.create.prefab_creator import (
     create_astronaut, create_bullet_player, create_hud,
     create_input_player, create_input_scene, create_lander_enemy,
-    create_pause_text, create_player, create_starfield
+    create_pause_text, create_player, create_starfield, create_terrain
 )
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 from src.ecs.components.c_surface import CSurface
@@ -30,6 +30,7 @@ from src.ecs.systems.s_hud import system_hud
 from src.ecs.systems.s_rendering import system_rendering
 from src.ecs.systems.s_screen_bullet import system_screen_bullet
 from src.ecs.systems.s_screen_player_bounds import system_screen_player_bounds
+from src.ecs.systems.s_terrain_rendering import system_terrain_rendering
 from src.engine.scene import Scene
 from src.engine.service_locator import ServiceLocator
 
@@ -65,6 +66,10 @@ class PlayScene(Scene):
         self._astro_spawn_times: list[float] = []
         self._enemy_spawn_timer: float = 0.0
         self._total_enemies_spawned: int = 0
+
+        self.terrain_heights: list[float] = []
+        self._terrain_entity: int | None = None
+        self._astro_sprite_h: int = 0
 
     def on_enter(self, payload: dict | None = None) -> None:
         if not self._loaded:
@@ -116,6 +121,15 @@ class PlayScene(Scene):
         create_starfield(
             self.world, self.world_config, self.screen_w, self.screen_h
         )
+
+        self._terrain_entity, self.terrain_heights = create_terrain(
+            self.world, self.world_config, self.world_width, self.screen_h
+        )
+
+        astro_img = ServiceLocator.images_service.get(
+            self.astronauts_config["Astronaut"]["image"]
+        )
+        self._astro_sprite_h = astro_img.get_height()
 
         self.player_entity = create_player(
             self.world, self.player_config,
@@ -237,8 +251,12 @@ class PlayScene(Scene):
         while (self._astro_spawn_times
                and self._game_timer >= self._astro_spawn_times[0]):
             x = random.uniform(0, self.world_width)
-            level_ratio = random.choice(levels)
-            y = self.screen_h * level_ratio
+            xi = int(x) % self.world_width
+            if self.terrain_heights:
+                y = self.terrain_heights[xi] - self._astro_sprite_h
+            else:
+                level_ratio = random.choice(levels)
+                y = self.screen_h * level_ratio
             create_astronaut(self.world, astro_cfg, pygame.Vector2(x, y))
             self._astro_spawn_times.pop(0)
 
@@ -345,5 +363,6 @@ class PlayScene(Scene):
         game_surface = screen.subsurface(
             pygame.Rect(0, header_h, self.screen_w, self.screen_h)
         )
+        system_terrain_rendering(self.world, game_surface, self.camera_x, self.world_width)
         system_rendering(self.world, game_surface, self.camera_x, self.world_width)
         system_hud(self.world, screen, self.interface_config, self.lives)

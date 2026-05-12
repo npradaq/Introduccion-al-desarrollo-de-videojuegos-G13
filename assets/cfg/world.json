@@ -41,5 +41,10 @@
     ],
     "planet_terrain_line_points": 50,
     "planet_parallax_factor": 1.25,
+    "planet_terrain_amplitude": 18,
+    "planet_terrain_base_ratio": 0.80,
+    "planet_terrain_waves": 8,
+    "planet_terrain_octaves": 3,
+    "planet_terrain_min_ratio": 0.57,
     "world_repeats": 4
 }
