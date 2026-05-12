@@ -21,3 +21,4 @@ class CAnimation:
         self.current_frame = first["start"]
         self.current_animation_time = 0.0
         self.finished = False
+        self.paused = False

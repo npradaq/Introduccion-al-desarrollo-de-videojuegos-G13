@@ -15,6 +15,8 @@ from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.ecs.components.c_astronaut_state import AstronautPhase, CAstronautState
+from src.ecs.components.c_lander_state import CLanderState
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 from src.ecs.components.tags.c_tag_burner import CTagBurner
 from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
@@ -157,26 +159,27 @@ def create_image(world: esper.World, image_path: str,
     return entity
 
 
-def create_hud(world: esper.World, interface_cfg: dict) -> None:
+def create_hud(world: esper.World, interface_cfg: dict) -> int | None:
+    """Returns the score_value entity ID for live updates."""
     hud_cfg = interface_cfg.get("hud", {})
     font_path = interface_cfg.get("font", "")
+    score_entity: int | None = None
 
     for key in ("score_label", "score_value"):
         cfg = hud_cfg.get(key)
         if cfg is None:
             continue
-        create_text(
-            world,
-            cfg.get("text", ""),
-            font_path,
-            cfg["size"],
-            cfg["color"],
-            cfg["position"]
-        )
-        entity_id = world.get_components(CTransform, CText)
-        if entity_id:
-            entity = list(entity_id)[-1][0]
-            world.add_component(entity, CTagHUD())
+        pos = pygame.Vector2(cfg["position"]["x"], cfg["position"]["y"])
+        c = cfg["color"]
+        rgb = (c["r"], c["g"], c["b"])
+        entity = world.create_entity()
+        world.add_component(entity, CTransform(pos))
+        world.add_component(entity, CText(cfg.get("text", ""), font_path, cfg["size"], rgb))
+        world.add_component(entity, CTagHUD())
+        if key == "score_value":
+            score_entity = entity
+
+    return score_entity
 
 
 def create_pause_text(world: esper.World, interface_cfg: dict,
@@ -217,9 +220,12 @@ def create_astronaut(world: esper.World, astronaut_cfg: dict,
 
     entity = world.create_entity()
     world.add_component(entity, CTransform(position))
-    world.add_component(entity, CVelocity(pygame.Vector2(0, astronaut_cfg.get("falling_velocity", 60))))
+    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
     world.add_component(entity, CSurface.from_surface(surface))
     world.add_component(entity, CAnimation(astronaut_cfg["animations"]))
+    state = CAstronautState(position.y)
+    state.phase = AstronautPhase.LANDED
+    world.add_component(entity, state)
     world.add_component(entity, CTagAstronaut())
 
     return entity
@@ -227,26 +233,30 @@ def create_astronaut(world: esper.World, astronaut_cfg: dict,
 
 def create_astronauts(world: esper.World, astronaut_cfg: dict, count: int,
                       screen_h: int, screen_w: int) -> None:
-    spawn_height = astronaut_cfg.get("spawn_height", 0.5)
-    spawn_y = int(screen_h * spawn_height)
+    levels = astronaut_cfg.get("levels", [0.70, 0.80, 0.90])
     spacing = screen_w // (count + 1)
 
     for i in range(count):
         x = spacing * (i + 1)
-        y = spawn_y
-        pos = pygame.Vector2(x, y)
+        level_ratio = levels[i % len(levels)]
+        pos = pygame.Vector2(x, screen_h * level_ratio)
         create_astronaut(world, astronaut_cfg, pos)
 
 
 def create_lander_enemy(world: esper.World, lander_enemy_cfg: dict,
-                  position: pygame.Vector2) -> int:
+                        position: pygame.Vector2) -> int:
     surface = ServiceLocator.images_service.get(lander_enemy_cfg["image"])
+
+    patrol_min = lander_enemy_cfg.get("initial_patrol_min", 2.0)
+    patrol_max = lander_enemy_cfg.get("initial_patrol_max", 10.0)
+    initial_patrol = random.uniform(patrol_min, patrol_max)
 
     entity = world.create_entity()
     world.add_component(entity, CTransform(position))
     world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
     world.add_component(entity, CSurface.from_surface(surface))
     world.add_component(entity, CAnimation(lander_enemy_cfg["animations"]))
+    world.add_component(entity, CLanderState(initial_patrol_duration=initial_patrol))
     world.add_component(entity, CTagLanderEnemy())
 
     return entity
