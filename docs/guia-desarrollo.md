@@ -137,7 +137,8 @@ src/
     └── systems/      # s_*.py (funciones libres)
 
 assets/
-├── cfg/   # JSON: window, player, lander, mutant, astronaut, bullets, ...
+├── cfg/   # JSON: window, interface, player, enemies, astronauts,
+│          #       bullets, world, level_01, scores
 ├── img/   # PNG sprites
 ├── snd/   # OGG (web-friendly)
 └── fnt/   # TTF
@@ -150,11 +151,12 @@ Ver [docs/04-estructura-archivos.md](04-estructura-archivos.md) para el árbol c
 ## 7. Configuración por archivos JSON
 
 - **Una config por concepto.** No mezclar player + bullets en el mismo JSON.
-- Cargadores en `src/engine/config_loader.py` — una función `load_<x>_config`
-  por archivo. Cargas centralizadas al inicio del `GameEngine`/escena, **no
-  dentro de loops**.
+- Carga mediante `ServiceLocator.config_service.get(path)` — cachéa el dict en
+  memoria; no llamar dentro de loops.
 - Posiciones, colores y tamaños siempre como objetos `{"x":..,"y":..}` /
   `{"r":..,"g":..,"b":..}` / `{"w":..,"h":..}`.
+- El detalle completo de claves por archivo está en
+  [docs/02-arquitectura.md § 4](02-arquitectura.md).
 
 ---
 
