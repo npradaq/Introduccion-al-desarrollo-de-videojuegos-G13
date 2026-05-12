@@ -1,0 +1,2 @@
+class CTagAstronaut:
+    pass

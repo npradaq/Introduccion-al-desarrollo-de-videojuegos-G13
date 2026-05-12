@@ -1,8 +1,8 @@
 import pygame
 
 from src.create.prefab_creator import (
-    create_bullet_player, create_hud, create_input_player, create_input_scene,
-    create_pause_text, create_player, create_starfield
+    create_astronauts, create_bullet_player, create_hud, create_input_player,
+    create_input_scene, create_pause_text, create_player, create_starfield
 )
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 from src.ecs.components.c_surface import CSurface
@@ -10,6 +10,7 @@ from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.systems.s_animation import system_animation
+from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_movement import system_movement
@@ -37,6 +38,7 @@ class PlayScene(Scene):
         self.world_config: dict = {}
         self.level_config: dict = {}
         self.interface_config: dict = {}
+        self.astronauts_config: dict = {}
         self._pause_entity: int | None = None
 
     def on_enter(self, payload: dict | None = None) -> None:
@@ -56,6 +58,9 @@ class PlayScene(Scene):
             self.interface_config = ServiceLocator.config_service.get(
                 "assets/cfg/interface.json"
             )
+            self.astronauts_config = ServiceLocator.config_service.get(
+                "assets/cfg/astronauts.json"
+            )
             self._loaded = True
 
         self.world.clear_database()
@@ -71,6 +76,13 @@ class PlayScene(Scene):
         )
         self.player_velocity = self.world.component_for_entity(
             self.player_entity, CVelocity
+        )
+
+        astronaut_count = self.level_config.get("astronauts_count", 10)
+        astronaut_cfg = self.astronauts_config.get("Astronaut", {})
+        create_astronauts(
+            self.world, astronaut_cfg, astronaut_count,
+            self.screen_h, self.screen_w
         )
 
         create_input_player(self.world)
@@ -162,6 +174,7 @@ class PlayScene(Scene):
             self.world, self.screen_w, self.screen_h
         )
         system_screen_bullet(self.world, dt)
+        system_astronaut(self.world, self.screen_h)
         system_player_state(self.world)
         system_animation(self.world, dt)
 
