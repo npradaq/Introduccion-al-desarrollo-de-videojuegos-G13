@@ -272,9 +272,10 @@ class PlayScene(Scene):
         system_movement(self.world, dt)
         system_enemy_wraparound(self.world, self.screen_h)
         system_attach_to(self.world)
-        system_parallax(
-            self.world, self.player_velocity, self.screen_w, dt
-        )
+        if self.player_velocity is not None:
+            system_parallax(
+                self.world, self.player_velocity, self.screen_w, dt
+            )
         system_screen_player_bounds(
             self.world, self.screen_w, self.screen_h, self.world_width
         )
@@ -282,7 +283,7 @@ class PlayScene(Scene):
         system_astronaut(self.world, self.screen_h)
         system_player_state(self.world)
         system_animation(self.world, dt)
-        self._update_camera()
+        #self._update_camera()
 
         self.world._clear_dead_entities()
 
