@@ -6,7 +6,7 @@
     "high_score_max_value": 1000,
     "menu": {
         "logo_image": "assets/img/game_logo.png",
-        "logo_position": { "x": 60, "y": 40 },
+        "logo_position": { "x": 85, "y": 40 },
         "instructions": [
             { "text": "PRESS ENTER TO START", "size": 8, "position": { "x": 65, "y": 150 }, "color": { "r": 255, "g": 255, "b": 0 } },
             { "text": "ARROWS TO MOVE", "size": 6, "position": { "x": 90, "y": 180 }, "color": { "r": 255, "g": 255, "b": 255 } },
