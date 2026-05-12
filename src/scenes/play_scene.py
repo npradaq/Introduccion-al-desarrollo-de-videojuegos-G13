@@ -4,8 +4,8 @@ import pygame
 
 from src.create.prefab_creator import (
     create_astronaut, create_astronauts, create_bullet_player, create_hud,
-    create_input_player, create_input_scene, create_lander_enemy, create_pause_text,
-    create_player, create_starfield
+    create_input_player, create_input_scene, create_lander_enemy,
+    create_mutant_enemy, create_pause_text, create_player, create_starfield
 )
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 from src.ecs.components.c_surface import CSurface
@@ -13,6 +13,7 @@ from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
+from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
 from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_attach_to import system_attach_to
@@ -53,6 +54,8 @@ class PlayScene(Scene):
         self._astro_spawn_times: list[float] = []
         self._enemy_spawn_timer: float = 0.0
         self._total_enemies_spawned: int = 0
+        self._mutant_spawn_timer: float = 0.0
+        self._total_mutants_spawned: int = 0
 
     def on_enter(self, payload: dict | None = None) -> None:
         if not self._loaded:
@@ -89,6 +92,8 @@ class PlayScene(Scene):
         self._game_timer = 0.0
         self._total_enemies_spawned = 0
         self._enemy_spawn_timer = 0.0
+        self._total_mutants_spawned = 0
+        self._mutant_spawn_timer = 0.0
 
         astronaut_count = self.level_config.get("astronauts_count", 10)
         spawn_duration = self.level_config.get("astronaut_spawn_duration", 5.0)
@@ -227,6 +232,32 @@ class PlayScene(Scene):
         create_lander_enemy(self.world, lander_cfg, pygame.Vector2(x, y))
         self._total_enemies_spawned += 1
 
+    def _spawn_mutant_enemies(self, dt: float) -> None:
+        mutant_cfg = self.enemies_config.get("Mutant", {})
+        max_concurrent = mutant_cfg.get("max_concurrent", 4)
+        max_total = mutant_cfg.get("max_total", 15)
+        spawn_interval = mutant_cfg.get("spawn_interval", 4.0)
+        start_delay = mutant_cfg.get("start_delay", 10.0)
+
+        if self._game_timer < start_delay:
+            return
+        if self._total_mutants_spawned >= max_total:
+            return
+
+        alive = len(list(self.world.get_component(CTagMutantEnemy)))
+        if alive >= max_concurrent:
+            return
+
+        self._mutant_spawn_timer += dt
+        if self._mutant_spawn_timer < spawn_interval:
+            return
+        self._mutant_spawn_timer = 0.0
+
+        x = random.uniform(0, self.world_width)
+        y = random.uniform(self.screen_h * 0.05, self.screen_h * 0.5)
+        create_mutant_enemy(self.world, mutant_cfg, pygame.Vector2(x, y))
+        self._total_mutants_spawned += 1
+
     def update(self, dt: float) -> None:
         if self.is_paused:
             system_blink(self.world, dt)
@@ -235,6 +266,7 @@ class PlayScene(Scene):
         self._game_timer += dt
         self._spawn_astronauts()
         self._spawn_enemies(dt)
+        self._spawn_mutant_enemies(dt)
 
         system_movement(self.world, dt)
         system_attach_to(self.world)
