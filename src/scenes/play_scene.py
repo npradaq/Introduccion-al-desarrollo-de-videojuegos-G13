@@ -18,10 +18,12 @@ from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
+from src.ecs.systems.s_burner import system_burner
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_player_input import system_player_input
 from src.ecs.systems.s_player_state import system_player_state
+from src.ecs.systems.s_hud import system_hud
 from src.ecs.systems.s_rendering import system_rendering
 from src.ecs.systems.s_screen_bullet import system_screen_bullet
 from src.ecs.systems.s_screen_player_bounds import system_screen_player_bounds
@@ -49,6 +51,7 @@ class PlayScene(Scene):
 
         self.world_width: int = 0
         self.camera_x: float = 0.0
+        self.lives: int = 3
 
         self._game_timer: float = 0.0
         self._astro_spawn_times: list[float] = []
@@ -279,10 +282,16 @@ class PlayScene(Scene):
         system_screen_bullet(self.world, dt)
         system_astronaut(self.world, self.screen_h)
         system_player_state(self.world)
+        system_burner(self.world)
         system_animation(self.world, dt)
         self._update_camera()
 
         self.world._clear_dead_entities()
 
     def draw(self, screen: pygame.Surface) -> None:
-        system_rendering(self.world, screen, self.camera_x, self.world_width)
+        header_h = self.interface_config.get("hud", {}).get("header_height", 32)
+        game_surface = screen.subsurface(
+            pygame.Rect(0, header_h, self.screen_w, self.screen_h)
+        )
+        system_rendering(self.world, game_surface, self.camera_x, self.world_width)
+        system_hud(self.world, screen, self.interface_config, self.lives)

@@ -11,12 +11,18 @@
         ]
     },
     "burner_animations": {
-        "number_frames": 1,
+        "number_frames": 3,
         "list": [
-            { "name": "IDLE", "start": 0, "end": 0, "framerate": 1 }
+            { "name": "IDLE", "start": 0, "end": 2, "framerate": 8 }
+        ]
+    },
+    "burner_moving_animations": {
+        "number_frames": 3,
+        "list": [
+            { "name": "MOVING", "start": 0, "end": 2, "framerate": 12 }
         ]
     },
     "input_velocity": 120,
     "max_velocity": 180,
-    "burner_offset": { "x": -8, "y": 0 }
+    "burner_offset": { "x": -4, "y": 4 }
 }

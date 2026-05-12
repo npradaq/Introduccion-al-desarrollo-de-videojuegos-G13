@@ -5,6 +5,7 @@ import pygame
 
 from src.ecs.components.c_animation import CAnimation
 from src.ecs.components.c_attach_to import CAttachTo
+from src.ecs.components.c_burner import CBurner
 from src.ecs.components.c_can_blink import CCanBlink
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_lifetime import CLifetime
@@ -39,22 +40,25 @@ def create_player(world: esper.World, player_cfg: dict, spawn_cfg: dict) -> int:
 
     burner_path = player_cfg.get("burner_idle_image")
     if burner_path:
-        burner_surface = ServiceLocator.images_service.get(burner_path)
+        idle_surface = ServiceLocator.images_service.get(burner_path)
+        moving_surface = ServiceLocator.images_service.get(
+            player_cfg.get("burner_moving_image", burner_path)
+        )
         burner_offset_cfg = player_cfg.get("burner_offset", {"x": 0, "y": 0})
         burner_offset = pygame.Vector2(
             burner_offset_cfg["x"], burner_offset_cfg["y"]
         )
+        idle_anim_cfg = player_cfg.get("burner_animations")
+        moving_anim_cfg = player_cfg.get("burner_moving_animations", idle_anim_cfg)
 
         burner_entity = world.create_entity()
-        world.add_component(
-            burner_entity, CTransform(position + burner_offset)
-        )
-        world.add_component(
-            burner_entity, CSurface.from_surface(burner_surface)
-        )
-        burner_anim_info = player_cfg.get("burner_animations")
-        if burner_anim_info:
-            world.add_component(burner_entity, CAnimation(burner_anim_info))
+        world.add_component(burner_entity, CTransform(position + burner_offset))
+        world.add_component(burner_entity, CSurface.from_surface(idle_surface))
+        if idle_anim_cfg:
+            world.add_component(burner_entity, CAnimation(idle_anim_cfg))
+        world.add_component(burner_entity, CBurner(
+            idle_surface, moving_surface, idle_anim_cfg, moving_anim_cfg
+        ))
         world.add_component(burner_entity, CAttachTo(entity, burner_offset))
         world.add_component(burner_entity, CTagBurner())
 
