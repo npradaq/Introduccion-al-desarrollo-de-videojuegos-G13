@@ -17,7 +17,7 @@ a lo largo del curso.
 
 | Nombre                        | Correo                                                                      | GitHub        |
 |-------------------------------|-----------------------------------------------------------------------------|---------------|
-| María Paula Estupiñán         | [m.estupinanm@uniandes.edu.co](mailto:m.estupinanm@uniandes.edu.co)         | estupinanm    |
+| María Paula Estupiñán         | [m.estupinanm@uniandes.edu.co](mailto:m.estupinanm@uniandes.edu.co)         | mestupinanm    |
 | Jairo Reyes Ramírez           | [ja.reyesr1@uniandes.edu.co](mailto:ja.reyesr1@uniandes.edu.co)             | jairoareyes2  |
 | Daniel Felipe Urrego Riveros  | [d.urregor@uniandes.edu.co](mailto:d.urregor@uniandes.edu.co)               | dafur1900     |
 | Nicolás Prada Quintero        | [n.pradaq@uniandes.edu.co](mailto:n.pradaq@uniandes.edu.co)                 | npradaq       |
