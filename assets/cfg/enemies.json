@@ -5,9 +5,9 @@
         "sound_capture": "assets/snd/lander_capture_astronaut.ogg",
         "sound_mutate": "assets/snd/lander_mutate_astronaut.ogg",
         "animations": {
-            "number_frames": 1,
+            "number_frames": 5,
             "list": [
-                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+                { "name": "FLY", "start": 0, "end": 4, "framerate": 8 }
             ]
         },
         "velocity_patrol": 40,
@@ -15,7 +15,10 @@
         "velocity_abduct": 50,
         "astronaut_detection_range": 120,
         "fire_rate": 0.02,
-        "bullet_velocity": 80
+        "bullet_velocity": 80,
+        "max_concurrent": 5,
+        "max_total": 20,
+        "spawn_interval": 3.0
     },
     "Mutant": {
         "image": "assets/img/enemy_mutant.png",
