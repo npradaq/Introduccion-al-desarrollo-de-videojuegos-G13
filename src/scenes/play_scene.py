@@ -56,6 +56,7 @@ class PlayScene(Scene):
         self._pause_entity: int | None = None
         self._game_over_entity: int | None = None
         self._score_entity: int | None = None
+        self._terrain_entity: int | None = None
 
         self.world_width: int = 0
         self.camera_x: float = 0.0
@@ -68,7 +69,6 @@ class PlayScene(Scene):
         self._total_enemies_spawned: int = 0
 
         self.terrain_heights: list[float] = []
-        self._terrain_entity: int | None = None
         self._astro_sprite_h: int = 0
 
     def on_enter(self, payload: dict | None = None) -> None:
