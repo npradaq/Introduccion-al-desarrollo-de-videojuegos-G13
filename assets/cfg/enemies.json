@@ -1,4 +1,9 @@
 {
+    "explosion": {
+        "particle_speed": 60,
+        "max_distance": 24,
+        "color": { "r": 255, "g": 255, "b": 255 }
+    },
     "Lander": {
         "image": "assets/img/enemy_lander.png",
         "sound_die": "assets/snd/enemy_die.ogg",
@@ -18,7 +23,9 @@
         "bullet_velocity": 80,
         "max_concurrent": 5,
         "max_total": 20,
-        "spawn_interval": 3.0
+        "spawn_interval": 3.0,
+        "initial_patrol_min": 2.0,
+        "initial_patrol_max": 10.0
     },
     "Mutant": {
         "image": "assets/img/enemy_mutant.png",

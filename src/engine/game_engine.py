@@ -17,9 +17,10 @@ class GameEngine:
         size = window_cfg.get("size", {})
         self.game_width = int(size.get("w", 320))
         self.game_height = int(size.get("h", 256))
+        self.hud_height = int(window_cfg.get("hud_height", 0))
         self.scale = max(1, scale)
         self.screen_width = self.game_width * self.scale
-        self.screen_height = self.game_height * self.scale
+        self.screen_height = (self.game_height + self.hud_height) * self.scale
         bg = window_cfg.get("bg_color", {})
         self.bg_color = (
             int(bg.get("r", 0)),
@@ -30,7 +31,9 @@ class GameEngine:
         pygame.init()
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption(title)
-        self.game_surface = pygame.Surface((self.game_width, self.game_height))
+        self.game_surface = pygame.Surface(
+            (self.game_width, self.game_height + self.hud_height)
+        )
         self.clock = pygame.time.Clock()
         self.is_running = False
         self.framerate = int(window_cfg.get("framerate", 60))

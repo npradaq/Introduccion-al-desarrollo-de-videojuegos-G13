@@ -12,14 +12,12 @@ from src.engine.service_locator import ServiceLocator
 def system_rendering(world: esper.World, screen: pygame.Surface,
                      camera_x: float = 0, world_width: int = 0) -> None:
     screen_w = screen.get_width()
-    components = world.get_components(CTransform, CSurface)
-    for entity, (c_transform, c_surface) in components:
-        if not c_surface.visible:
+    for entity, (c_transform, c_surface) in world.get_components(CTransform, CSurface):
+        if not c_surface.visible or world.has_component(entity, CTagHUD):
             continue
         use_camera = (
             world_width > 0
             and not world.has_component(entity, CParallax)
-            and not world.has_component(entity, CTagHUD)
         )
         if use_camera:
             sx = (c_transform.position.x - camera_x) % world_width
@@ -31,9 +29,8 @@ def system_rendering(world: esper.World, screen: pygame.Surface,
         else:
             screen.blit(c_surface.surface, c_transform.position, c_surface.area)
 
-    text_components = world.get_components(CTransform, CText)
-    for entity, (c_transform, c_text) in text_components:
-        if not c_text.visible:
+    for entity, (c_transform, c_text) in world.get_components(CTransform, CText):
+        if not c_text.visible or world.has_component(entity, CTagHUD):
             continue
         if c_text.surface is None:
             font = ServiceLocator.fonts_service.get(c_text.font_path, c_text.size)
