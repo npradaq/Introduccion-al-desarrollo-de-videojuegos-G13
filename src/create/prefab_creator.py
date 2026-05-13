@@ -16,6 +16,8 @@ from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 from src.ecs.components.tags.c_tag_burner import CTagBurner
+from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
+from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
 from src.ecs.components.tags.c_tag_hud import CTagHUD
 from src.ecs.components.tags.c_tag_player import CTagPlayer
@@ -230,3 +232,31 @@ def create_astronauts(world: esper.World, astronaut_cfg: dict, count: int,
         y = spawn_y
         pos = pygame.Vector2(x, y)
         create_astronaut(world, astronaut_cfg, pos)
+
+
+def create_lander_enemy(world: esper.World, lander_enemy_cfg: dict,
+                  position: pygame.Vector2) -> int:
+    surface = ServiceLocator.images_service.get(lander_enemy_cfg["image"])
+
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(position))
+    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
+    world.add_component(entity, CSurface.from_surface(surface))
+    world.add_component(entity, CAnimation(lander_enemy_cfg["animations"]))
+    world.add_component(entity, CTagLanderEnemy())
+
+    return entity
+
+
+def create_mutant_enemy(world: esper.World, mutant_enemy_cfg: dict,
+                        position: pygame.Vector2) -> int:
+    surface = ServiceLocator.images_service.get(mutant_enemy_cfg["image"])
+
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(position))
+    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
+    world.add_component(entity, CSurface.from_surface(surface))
+    world.add_component(entity, CAnimation(mutant_enemy_cfg["animations"]))
+    world.add_component(entity, CTagMutantEnemy())
+
+    return entity
