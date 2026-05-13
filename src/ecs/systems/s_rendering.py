@@ -12,7 +12,7 @@ def system_rendering(world: esper.World, screen: pygame.Surface) -> None:
     for entity, (c_transform, c_surface) in components:
         if not c_surface.visible:
             continue
-        screen.blit(c_surface.surface, c_transform.position, c_surface.area)
+        screen.blit(c_surface.surface, c_transform.position, area=c_surface.area)
 
     text_components = world.get_components(CTransform, CText)
     for entity, (c_transform, c_text) in text_components:

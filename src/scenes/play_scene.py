@@ -4,11 +4,16 @@ from src.create.prefab_creator import (
     create_bullet_player, create_hud, create_input_player, create_input_scene,
     create_pause_text, create_player, create_starfield
 )
+from src.create.prefab_creator_enemy import create_fixed_enemy_spawner, create_random_enemy_spawner
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.ecs.systems.Enemy.s_fixed_enemy_spawner import system_fixed_enemy_spawner
+from src.ecs.systems.Enemy.s_lander_state import system_lander_state
+from src.ecs.systems.Enemy.s_mutant_state import system_mutant_state
+from src.ecs.systems.Enemy.s_random_enemy_spawner import system_random_enemy_spawner
 from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
@@ -38,6 +43,7 @@ class PlayScene(Scene):
         self.level_config: dict = {}
         self.interface_config: dict = {}
         self._pause_entity: int | None = None
+        self.total_time = 0.0
 
     def on_enter(self, payload: dict | None = None) -> None:
         if not self._loaded:
@@ -56,6 +62,10 @@ class PlayScene(Scene):
             self.interface_config = ServiceLocator.config_service.get(
                 "assets/cfg/interface.json"
             )
+            self.enemies_config = ServiceLocator.config_service.get(
+                "assets/cfg/enemies.json")
+            self.spawner_config = ServiceLocator.config_service.get(
+                "assets/cfg/spawner.json")
             self._loaded = True
 
         self.world.clear_database()
@@ -79,6 +89,9 @@ class PlayScene(Scene):
         self._pause_entity = create_pause_text(
             self.world, self.interface_config, self.screen_w, self.screen_h
         )
+
+        create_fixed_enemy_spawner(self.world, self.level_config["enemy_spawn_events"], self.enemies_config)
+        create_random_enemy_spawner(self.world, self.spawner_config)
 
         fanfare = self.level_config.get("fanfare_sound")
         if fanfare:
@@ -152,17 +165,25 @@ class PlayScene(Scene):
         if self.is_paused:
             system_blink(self.world, dt)
             return
+        
+        self.total_time += dt
 
         system_movement(self.world, dt)
         system_attach_to(self.world)
         system_parallax(
-            self.world, self.player_velocity, self.screen_w, dt
+            self.world, self.player_velocity, self.screen_w, dt # type: ignore
         )
         system_screen_player_bounds(
             self.world, self.screen_w, self.screen_h
         )
         system_screen_bullet(self.world, dt)
+        system_lander_state(self.world, dt, self.enemies_config["Lander"], self.screen_h, self.screen_w)
+        system_mutant_state(self.world, dt, self.enemies_config["Mutant"], self.player_entity) # type: ignore
         system_player_state(self.world)
+        system_fixed_enemy_spawner(self.world, self.total_time)
+        if self.player_entity is not None:
+            system_random_enemy_spawner(self.world, dt, self.total_time, self.player_entity,
+                                         self.enemies_config, self.screen_w, self.screen_h)
         system_animation(self.world, dt)
 
         self.world._clear_dead_entities()

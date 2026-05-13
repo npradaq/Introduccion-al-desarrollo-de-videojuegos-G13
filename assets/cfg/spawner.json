@@ -1,0 +1,9 @@
+{
+    "spawn_interval": 3.0,
+    "spawn_radius_from_player": 80,
+    "initial_max_enemies": 5,
+    "max_enemies_growth": 0.1,
+    "enemy_types": [
+        "Lander"
+    ]
+}
