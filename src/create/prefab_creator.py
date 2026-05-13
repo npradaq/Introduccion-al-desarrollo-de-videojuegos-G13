@@ -14,6 +14,7 @@ from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 from src.ecs.components.tags.c_tag_burner import CTagBurner
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
 from src.ecs.components.tags.c_tag_hud import CTagHUD
@@ -202,3 +203,30 @@ def create_pause_text(world: esper.World, interface_cfg: dict,
     c_text.visible = False
 
     return entity
+
+
+def create_astronaut(world: esper.World, astronaut_cfg: dict,
+                     position: pygame.Vector2) -> int:
+    surface = ServiceLocator.images_service.get(astronaut_cfg["image"])
+
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(position))
+    world.add_component(entity, CVelocity(pygame.Vector2(0, astronaut_cfg.get("falling_velocity", 60))))
+    world.add_component(entity, CSurface.from_surface(surface))
+    world.add_component(entity, CAnimation(astronaut_cfg["animations"]))
+    world.add_component(entity, CTagAstronaut())
+
+    return entity
+
+
+def create_astronauts(world: esper.World, astronaut_cfg: dict, count: int,
+                      screen_h: int, screen_w: int) -> None:
+    spawn_height = astronaut_cfg.get("spawn_height", 0.5)
+    spawn_y = int(screen_h * spawn_height)
+    spacing = screen_w // (count + 1)
+
+    for i in range(count):
+        x = spacing * (i + 1)
+        y = spawn_y
+        pos = pygame.Vector2(x, y)
+        create_astronaut(world, astronaut_cfg, pos)
