@@ -6,7 +6,7 @@
     "high_score_max_value": 1000,
     "menu": {
         "logo_image": "assets/img/game_logo.png",
-        "logo_position": { "x": 60, "y": 40 },
+        "logo_position": { "x": 85, "y": 40 },
         "instructions": [
             { "text": "PRESS ENTER TO START", "size": 8, "position": { "x": 65, "y": 150 }, "color": { "r": 255, "g": 255, "b": 0 } },
             { "text": "ARROWS TO MOVE", "size": 6, "position": { "x": 90, "y": 180 }, "color": { "r": 255, "g": 255, "b": 255 } },
@@ -16,8 +16,31 @@
         ]
     },
     "hud": {
-        "score_label": { "text": "SCORE", "size": 8, "position": { "x": 8, "y": 4 }, "color": { "r": 255, "g": 255, "b": 0 } },
-        "score_value": { "text": "0", "size": 8, "position": { "x": 8, "y": 16 }, "color": { "r": 255, "g": 255, "b": 255 } }
+        "header_height": 32,
+        "header_line_color": { "r": 0, "g": 0, "b": 255 },
+        "score_label": { "text": "SCORE", "size": 6, "position": { "x": 8, "y": 4 }, "color": { "r": 255, "g": 255, "b": 0 } },
+        "score_value": { "text": "0", "size": 6, "position": { "x": 8, "y": 18 }, "color": { "r": 255, "g": 255, "b": 255 } },
+        "lives": {
+            "image": "assets/img/interface_lives.png",
+            "count": 3,
+            "x": 88,
+            "y": 22,
+            "spacing": 16
+        },
+        "enemies_count": {
+            "label": "ENE",
+            "size": 6,
+            "x": 200,
+            "y": 4,
+            "color": { "r": 255, "g": 100, "b": 100 }
+        },
+        "astronauts_count": {
+            "label": "AST",
+            "size": 6,
+            "x": 264,
+            "y": 4,
+            "color": { "r": 100, "g": 255, "b": 100 }
+        }
     },
     "pause": {
         "text": "PAUSED",

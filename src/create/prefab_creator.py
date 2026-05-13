@@ -5,15 +5,22 @@ import pygame
 
 from src.ecs.components.c_animation import CAnimation
 from src.ecs.components.c_attach_to import CAttachTo
+from src.ecs.components.c_burner import CBurner
+from src.ecs.components.c_can_blink import CCanBlink
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_parallax import CParallax
 from src.ecs.components.c_player_state import CPlayerState
 from src.ecs.components.c_surface import CSurface
+from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 from src.ecs.components.tags.c_tag_burner import CTagBurner
+from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
+from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
+from src.ecs.components.tags.c_tag_hud import CTagHUD
 from src.ecs.components.tags.c_tag_player import CTagPlayer
 from src.ecs.components.tags.c_tag_star import CTagStar
 from src.engine.service_locator import ServiceLocator
@@ -33,22 +40,25 @@ def create_player(world: esper.World, player_cfg: dict, spawn_cfg: dict) -> int:
 
     burner_path = player_cfg.get("burner_idle_image")
     if burner_path:
-        burner_surface = ServiceLocator.images_service.get(burner_path)
+        idle_surface = ServiceLocator.images_service.get(burner_path)
+        moving_surface = ServiceLocator.images_service.get(
+            player_cfg.get("burner_moving_image", burner_path)
+        )
         burner_offset_cfg = player_cfg.get("burner_offset", {"x": 0, "y": 0})
         burner_offset = pygame.Vector2(
             burner_offset_cfg["x"], burner_offset_cfg["y"]
         )
+        idle_anim_cfg = player_cfg.get("burner_animations")
+        moving_anim_cfg = player_cfg.get("burner_moving_animations", idle_anim_cfg)
 
         burner_entity = world.create_entity()
-        world.add_component(
-            burner_entity, CTransform(position + burner_offset)
-        )
-        world.add_component(
-            burner_entity, CSurface.from_surface(burner_surface)
-        )
-        burner_anim_info = player_cfg.get("burner_animations")
-        if burner_anim_info:
-            world.add_component(burner_entity, CAnimation(burner_anim_info))
+        world.add_component(burner_entity, CTransform(position + burner_offset))
+        world.add_component(burner_entity, CSurface.from_surface(idle_surface))
+        if idle_anim_cfg:
+            world.add_component(burner_entity, CAnimation(idle_anim_cfg))
+        world.add_component(burner_entity, CBurner(
+            idle_surface, moving_surface, idle_anim_cfg, moving_anim_cfg
+        ))
         world.add_component(burner_entity, CAttachTo(entity, burner_offset))
         world.add_component(burner_entity, CTagBurner())
 
@@ -62,6 +72,16 @@ def create_input_player(world: esper.World) -> None:
         ("PLAYER_UP", pygame.K_UP),
         ("PLAYER_DOWN", pygame.K_DOWN),
         ("PLAYER_FIRE", pygame.K_SPACE),
+    ]
+    for name, key in mappings:
+        entity = world.create_entity()
+        world.add_component(entity, CInputCommand(name, key))
+
+
+def create_input_scene(world: esper.World) -> None:
+    mappings = [
+        ("PAUSE", pygame.K_p),
+        ("BACK_TO_MENU", pygame.K_BACKSPACE),
     ]
     for name, key in mappings:
         entity = world.create_entity()
@@ -113,3 +133,134 @@ def create_starfield(world: esper.World, world_cfg: dict,
         world.add_component(entity, CSurface(size, color))
         world.add_component(entity, CParallax(parallax))
         world.add_component(entity, CTagStar())
+
+
+def create_text(world: esper.World, text: str, font_path: str, size: int,
+                color: dict, position: dict) -> int:
+    pos = pygame.Vector2(position.get("x", 0), position.get("y", 0))
+    rgb = (color.get("r", 255), color.get("g", 255), color.get("b", 255))
+
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(pos))
+    world.add_component(entity, CText(text, font_path, size, rgb))
+    return entity
+
+
+def create_image(world: esper.World, image_path: str,
+                 position: dict) -> int:
+    surface = ServiceLocator.images_service.get(image_path)
+    pos = pygame.Vector2(position.get("x", 0), position.get("y", 0))
+
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(pos))
+    world.add_component(entity, CSurface.from_surface(surface))
+    return entity
+
+
+def create_hud(world: esper.World, interface_cfg: dict) -> None:
+    hud_cfg = interface_cfg.get("hud", {})
+    font_path = interface_cfg.get("font", "")
+
+    for key in ("score_label", "score_value"):
+        cfg = hud_cfg.get(key)
+        if cfg is None:
+            continue
+        create_text(
+            world,
+            cfg.get("text", ""),
+            font_path,
+            cfg["size"],
+            cfg["color"],
+            cfg["position"]
+        )
+        entity_id = world.get_components(CTransform, CText)
+        if entity_id:
+            entity = list(entity_id)[-1][0]
+            world.add_component(entity, CTagHUD())
+
+
+def create_pause_text(world: esper.World, interface_cfg: dict,
+                      screen_w: int, screen_h: int) -> int:
+    pause_cfg = interface_cfg.get("pause", {})
+    font_path = interface_cfg.get("font", "")
+
+    text = pause_cfg.get("text", "PAUSED")
+    size = pause_cfg.get("size", 16)
+    color = pause_cfg.get("color", {"r": 255, "g": 255, "b": 255})
+    blink_rate = pause_cfg.get("blink_rate", 2.0)
+
+    rgb = (color.get("r", 255), color.get("g", 255), color.get("b", 255))
+
+    entity = world.create_entity()
+    font = ServiceLocator.fonts_service.get(font_path, size)
+    text_surface = font.render(text, True, rgb)
+    text_w = text_surface.get_width()
+    text_h = text_surface.get_height()
+    center_x = (screen_w - text_w) // 2
+    center_y = (screen_h - text_h) // 2
+
+    world.add_component(entity, CTransform(pygame.Vector2(center_x, center_y)))
+    world.add_component(entity, CText(text, font_path, size, rgb))
+    world.add_component(entity, CCanBlink(blink_rate))
+    world.add_component(entity, CTagHUD())
+
+    c_text = world.component_for_entity(entity, CText)
+    c_text.surface = text_surface
+    c_text.visible = False
+
+    return entity
+
+
+def create_astronaut(world: esper.World, astronaut_cfg: dict,
+                     position: pygame.Vector2) -> int:
+    surface = ServiceLocator.images_service.get(astronaut_cfg["image"])
+
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(position))
+    world.add_component(entity, CVelocity(pygame.Vector2(0, astronaut_cfg.get("falling_velocity", 60))))
+    world.add_component(entity, CSurface.from_surface(surface))
+    world.add_component(entity, CAnimation(astronaut_cfg["animations"]))
+    world.add_component(entity, CTagAstronaut())
+
+    return entity
+
+
+def create_astronauts(world: esper.World, astronaut_cfg: dict, count: int,
+                      screen_h: int, screen_w: int) -> None:
+    spawn_height = astronaut_cfg.get("spawn_height", 0.5)
+    spawn_y = int(screen_h * spawn_height)
+    spacing = screen_w // (count + 1)
+
+    for i in range(count):
+        x = spacing * (i + 1)
+        y = spawn_y
+        pos = pygame.Vector2(x, y)
+        create_astronaut(world, astronaut_cfg, pos)
+
+
+def create_lander_enemy(world: esper.World, lander_enemy_cfg: dict,
+                  position: pygame.Vector2) -> int:
+    surface = ServiceLocator.images_service.get(lander_enemy_cfg["image"])
+
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(position))
+    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
+    world.add_component(entity, CSurface.from_surface(surface))
+    world.add_component(entity, CAnimation(lander_enemy_cfg["animations"]))
+    world.add_component(entity, CTagLanderEnemy())
+
+    return entity
+
+
+def create_mutant_enemy(world: esper.World, mutant_enemy_cfg: dict,
+                        position: pygame.Vector2) -> int:
+    surface = ServiceLocator.images_service.get(mutant_enemy_cfg["image"])
+
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(position))
+    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
+    world.add_component(entity, CSurface.from_surface(surface))
+    world.add_component(entity, CAnimation(mutant_enemy_cfg["animations"]))
+    world.add_component(entity, CTagMutantEnemy())
+
+    return entity

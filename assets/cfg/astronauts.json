@@ -1,0 +1,15 @@
+{
+    "Astronaut": {
+        "image": "assets/img/astronaut.png",
+        "sound_rescued": "assets/snd/astronaut_rescued.ogg",
+        "animations": {
+            "number_frames": 3,
+            "list": [
+                { "name": "FALL", "start": 0, "end": 2, "framerate": 6 }
+            ]
+        },
+        "falling_velocity": 60,
+        "spawn_height": 0.4,
+        "landing_height": 0.85
+    }
+}
