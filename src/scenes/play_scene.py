@@ -368,4 +368,5 @@ class PlayScene(Scene):
         system_rendering(self.world, game_surface, self.camera_x, self.world_width)
         system_hud(self.world, screen, self.interface_config, self.lives)
         system_minimap(self.world, screen, self.camera_x, self.world_width,
-                      self.screen_w, self.screen_h, self.interface_config)
+                      self.screen_w, self.screen_h, self.interface_config,
+                      self.player_entity)

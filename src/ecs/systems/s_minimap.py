@@ -9,7 +9,7 @@ from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 
 
 def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: int,
-                   screen_w: int, screen_h: int, interface_cfg: dict) -> None:
+                   screen_w: int, screen_h: int, interface_cfg: dict, player_entity: int | None = None) -> None:
     """
     Render a minimap showing terrain, enemies, and astronauts.
 
@@ -54,21 +54,45 @@ def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: 
     if not terrain_heights:
         return
 
-    # Draw terrain
+    # Draw terrain as smooth filled silhouette with interpolation
     minimap_start = camera_x - screen_w
     minimap_range = 3 * screen_w
 
-    for mx in range(mm_w):
-        world_x = minimap_start + mx * minimap_range / mm_w
-        world_x_idx = int(world_x) % world_width
-        terrain_y = terrain_heights[world_x_idx]
+    # Interpolate terrain: 2 samples per minimap pixel for smoothness
+    samples_per_pixel = 2
+    total_samples = mm_w * samples_per_pixel
 
-        # Scale terrain y to minimap height (0 to mm_h)
+    for i in range(total_samples):
+        # Calculate world x with interpolation
+        t = i / total_samples
+        world_x = minimap_start + t * minimap_range
+
+        # Linear interpolation between adjacent terrain points
+        x_int = int(world_x)
+        x_frac = world_x - x_int
+
+        idx1 = x_int % world_width
+        idx2 = (x_int + 1) % world_width
+
+        h1 = terrain_heights[idx1]
+        h2 = terrain_heights[idx2]
+
+        # Interpolated height
+        terrain_y = h1 + (h2 - h1) * x_frac
+
+        # Scale to minimap height
         my = int((terrain_y / screen_h) * mm_h)
+        my = max(0, min(my, mm_h - 1))
 
-        # Clamp to minimap bounds
-        if 0 <= my < mm_h:
-            screen.set_at((mm_x + mx, mm_y + my), terrain_color)
+        # Map sample index to minimap pixel column
+        mm_x_pixel = int((i / total_samples) * mm_w)
+        if mm_x_pixel >= mm_w:
+            mm_x_pixel = mm_w - 1
+
+        # Draw filled column from terrain to bottom
+        pygame.draw.line(screen, terrain_color,
+                        (mm_x + mm_x_pixel, mm_y + my),
+                        (mm_x + mm_x_pixel, mm_y + mm_h - 1))
 
     # Draw enemies (Lander + Mutant)
     for _, (c_transform, _) in world.get_components(CTransform, CTagLanderEnemy):
@@ -84,15 +108,24 @@ def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: 
         _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
                             mm_x, mm_y, mm_w, mm_h, screen_h, astro_color)
 
-    # Draw viewport indicator (where the camera is looking)
-    viewport_start_rel = camera_x - minimap_start
-    viewport_pixel = int((viewport_start_rel / minimap_range) * mm_w)
-    viewport_width = int((screen_w / minimap_range) * mm_w)
-    viewport_width = max(1, viewport_width)
+    # Draw player indicator (yellow/gold)
+    if player_entity is not None:
+        try:
+            c_transform = world.component_for_entity(player_entity, CTransform)
+            _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
+                                mm_x, mm_y, mm_w, mm_h, screen_h,
+                                pygame.Color(255, 255, 0))
+        except (KeyError, IndexError):
+            pass
 
-    if 0 <= viewport_pixel < mm_w:
-        pygame.draw.rect(screen, viewport_color,
-                        (mm_x + viewport_pixel, mm_y + 1, viewport_width, mm_h - 2), 1)
+    # Draw viewport lines (top and bottom bounds of visible area)
+    # Minimap height represents full screen_h, so:
+    # - Top line at y=0 in world → mm_y + 0 in minimap
+    # - Bottom line at y=screen_h in world → mm_y + mm_h in minimap
+    pygame.draw.line(screen, viewport_color,
+                     (mm_x, mm_y), (mm_x + mm_w, mm_y), 1)
+    pygame.draw.line(screen, viewport_color,
+                     (mm_x, mm_y + mm_h - 1), (mm_x + mm_w, mm_y + mm_h - 1), 1)
 
 
 def _draw_minimap_entity(screen: pygame.Surface, c_transform: CTransform,
