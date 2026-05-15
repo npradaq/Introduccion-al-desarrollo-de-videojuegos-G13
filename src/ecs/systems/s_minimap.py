@@ -108,13 +108,13 @@ def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: 
         _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
                             mm_x, mm_y, mm_w, mm_h, screen_h, astro_color)
 
-    # Draw player indicator (yellow/gold)
+    # Draw player indicator (white)
     if player_entity is not None:
         try:
             c_transform = world.component_for_entity(player_entity, CTransform)
             _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
                                 mm_x, mm_y, mm_w, mm_h, screen_h,
-                                pygame.Color(255, 255, 0))
+                                pygame.Color(255, 255, 255))
         except (KeyError, IndexError):
             pass
 
