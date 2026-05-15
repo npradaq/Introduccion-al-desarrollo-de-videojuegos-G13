@@ -31,6 +31,7 @@ from src.ecs.systems.s_rendering import system_rendering
 from src.ecs.systems.s_screen_bullet import system_screen_bullet
 from src.ecs.systems.s_screen_player_bounds import system_screen_player_bounds
 from src.ecs.systems.s_terrain_rendering import system_terrain_rendering
+from src.ecs.systems.s_minimap import system_minimap
 from src.engine.scene import Scene
 from src.engine.service_locator import ServiceLocator
 
@@ -366,3 +367,5 @@ class PlayScene(Scene):
         system_terrain_rendering(self.world, game_surface, self.camera_x, self.world_width)
         system_rendering(self.world, game_surface, self.camera_x, self.world_width)
         system_hud(self.world, screen, self.interface_config, self.lives)
+        system_minimap(self.world, screen, self.camera_x, self.world_width,
+                      self.screen_w, self.screen_h, self.interface_config)

@@ -40,6 +40,17 @@
             "x": 264,
             "y": 4,
             "color": { "r": 100, "g": 255, "b": 100 }
+        },
+        "minimap": {
+            "x": 80,
+            "y": 3,
+            "width": 160,
+            "height": 26,
+            "border_color": { "r": 0, "g": 0, "b": 255 },
+            "terrain_color": { "r": 255, "g": 165, "b": 0 },
+            "enemy_color": { "r": 255, "g": 50, "b": 50 },
+            "astronaut_color": { "r": 50, "g": 255, "b": 50 },
+            "viewport_color": { "r": 255, "g": 255, "b": 255 }
         }
     },
     "pause": {
