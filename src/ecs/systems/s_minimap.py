@@ -118,14 +118,24 @@ def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: 
         except (KeyError, IndexError):
             pass
 
-    # Draw viewport lines (top and bottom bounds of visible area)
-    # Minimap height represents full screen_h, so:
-    # - Top line at y=0 in world → mm_y + 0 in minimap
-    # - Bottom line at y=screen_h in world → mm_y + mm_h in minimap
-    pygame.draw.line(screen, viewport_color,
-                     (mm_x, mm_y), (mm_x + mm_w, mm_y), 1)
-    pygame.draw.line(screen, viewport_color,
-                     (mm_x, mm_y + mm_h - 1), (mm_x + mm_w, mm_y + mm_h - 1), 1)
+    # Draw viewport indicator bracket - always centered (ship is always at mm_w//2)
+    indicator_w = mm_w // 5
+    half_w = indicator_w // 2
+    center = mm_w // 2
+    cap_h = 3
+
+    vx0 = mm_x + center - half_w
+    vx1 = mm_x + center + half_w
+
+    # Top horizontal line + vertical caps
+    pygame.draw.line(screen, viewport_color, (vx0, mm_y), (vx1, mm_y), 1)
+    pygame.draw.line(screen, viewport_color, (vx0, mm_y), (vx0, mm_y + cap_h), 1)
+    pygame.draw.line(screen, viewport_color, (vx1, mm_y), (vx1, mm_y + cap_h), 1)
+
+    # Bottom horizontal line + vertical caps
+    pygame.draw.line(screen, viewport_color, (vx0, mm_y + mm_h - 1), (vx1, mm_y + mm_h - 1), 1)
+    pygame.draw.line(screen, viewport_color, (vx0, mm_y + mm_h - 1 - cap_h), (vx0, mm_y + mm_h - 1), 1)
+    pygame.draw.line(screen, viewport_color, (vx1, mm_y + mm_h - 1 - cap_h), (vx1, mm_y + mm_h - 1), 1)
 
 
 def _draw_minimap_entity(screen: pygame.Surface, c_transform: CTransform,
