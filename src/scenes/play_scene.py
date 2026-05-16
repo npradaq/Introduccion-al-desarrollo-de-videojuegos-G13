@@ -144,13 +144,13 @@ class PlayScene(Scene):
         )
         game_over_entity = self._create_game_over_text()
 
+        self.lives = self.level_config.get("lives", 3)
         game_over_sound = self.interface_config.get(
             "game_over", {}
         ).get("sound", "assets/snd/game_over.ogg")
-        game_over_score = self.scores_config.get("game_over_score", 2000)
         self._game_state_entity = create_play_game_state(
             self.world, self.player_entity, score_entity, game_over_entity,
-            self.screen_w, game_over_score, game_over_sound
+            self.screen_w, game_over_sound, self.lives
         )
 
         fanfare = self.level_config.get("fanfare_sound")
@@ -248,6 +248,7 @@ class PlayScene(Scene):
             system_blink(self.world, dt)
             return
         if self._game_over:
+            system_play_game_state(self.world, 0, dt)
             return
 
         system_astronaut_spawner(self.world, dt)
@@ -261,7 +262,7 @@ class PlayScene(Scene):
         system_screen_player_bounds(
             self.world, self.screen_w, self.screen_h, self.world_width
         )
-        system_screen_bullet(self.world, dt)
+        system_screen_bullet(self.world, dt, self.camera_x, self.screen_w)
 
         lander_cfg = self.enemies_config.get("Lander", {})
         mutant_cfg = self.enemies_config.get("Mutant", {})
@@ -281,7 +282,7 @@ class PlayScene(Scene):
         )
         score_delta += system_astronaut(self.world, astro_cfg, points_per_rescued)
 
-        system_play_game_state(self.world, score_delta)
+        system_play_game_state(self.world, score_delta, dt)
 
         if self._game_state_entity is not None:
             gs = self.world.component_for_entity(
@@ -289,6 +290,7 @@ class PlayScene(Scene):
             )
             self._game_over = gs.game_over
             self.camera_x = gs.camera_x
+            self.lives = gs.lives
 
         system_player_state(self.world)
         system_burner(self.world)

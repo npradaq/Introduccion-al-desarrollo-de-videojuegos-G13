@@ -333,12 +333,12 @@ def create_terrain(world: esper.World, world_cfg: dict,
 
 def create_play_game_state(world: esper.World, player_entity: int,
                            score_entity: int | None, game_over_entity: int | None,
-                           screen_w: int, game_over_score: int,
-                           game_over_sound: str) -> int:
+                           screen_w: int, game_over_sound: str,
+                           lives: int = 3) -> int:
     entity = world.create_entity()
     world.add_component(entity, CPlayGameState(
         player_entity, score_entity, game_over_entity,
-        screen_w, game_over_score, game_over_sound
+        screen_w, game_over_sound, lives
     ))
     return entity
 
