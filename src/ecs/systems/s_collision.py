@@ -1,15 +1,14 @@
 import esper
 import pygame
 
+from src.ecs.components.Enemy.c_lander_state import CLanderState, LanderState
 from src.ecs.components.c_astronaut_state import AstronautPhase, CAstronautState
-from src.ecs.components.c_lander_state import CLanderState, LanderPhase
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
-from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
-from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
+from src.ecs.components.tags.c_tag_enemy import CTagEnemy
 from src.ecs.components.tags.c_tag_particle import CTagParticle
 from src.engine.service_locator import ServiceLocator
 
@@ -64,9 +63,9 @@ def system_collision(world: esper.World, explosion_cfg: dict,
     if not bullet_rects:
         return 0
 
-    for e_ent, (et, es) in world.get_components(CTransform, CSurface):
-        is_lander = world.has_component(e_ent, CTagLanderEnemy)
-        is_mutant = world.has_component(e_ent, CTagMutantEnemy)
+    for e_ent, (et, es, etag) in world.get_components(CTransform, CSurface, CTagEnemy):
+        is_lander = etag.enemy_type == "Lander"
+        is_mutant = etag.enemy_type == "Mutant"
         if not (is_lander or is_mutant):
             continue
         if e_ent in enemies_to_delete:
@@ -94,9 +93,9 @@ def system_collision(world: esper.World, explosion_cfg: dict,
     for e_ent, is_lander in enemies_to_delete.items():
         if is_lander and world.has_component(e_ent, CLanderState):
             lstate = world.component_for_entity(e_ent, CLanderState)
-            if (lstate.target_astronaut_id is not None
-                    and lstate.phase == LanderPhase.ABDUCT):
-                _free_captured_astronaut(world, lstate.target_astronaut_id,
+            if (lstate.astronaute_being_abducted is not None
+                    and lstate.state == LanderState.ABDUCT):
+                _free_captured_astronaut(world, lstate.astronaute_being_abducted,
                                          falling_vel, sound_fall)
 
     for ent in bullets_to_delete:

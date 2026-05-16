@@ -31,6 +31,20 @@ from src.engine.perlin import octave_noise1d, seed
 from src.engine.service_locator import ServiceLocator
 
 
+def create_sprite(world: esper.World, pos:pygame.Vector2,
+                    vel:pygame.Vector2, surface: pygame.Surface) -> int:
+    
+    sprite_entity = world.create_entity()
+    world.add_component(sprite_entity,
+                        CTransform(pos))
+    world.add_component(sprite_entity,
+                        CVelocity(vel))
+    world.add_component(sprite_entity,
+                        CSurface.from_surface(surface))
+    return sprite_entity
+
+
+
 def create_player(world: esper.World, player_cfg: dict, spawn_cfg: dict) -> int:
     surface = ServiceLocator.images_service.get(player_cfg["image"])
     pos = spawn_cfg["position"]
