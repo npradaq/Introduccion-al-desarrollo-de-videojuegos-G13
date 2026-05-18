@@ -7,6 +7,7 @@ from src.create.prefab_creator import (
     create_hud, create_input_player, create_input_scene, create_pause_text,
     create_play_game_state, create_player, create_starfield, create_terrain
 )
+from src.create.prefab_creator_enemy import create_fixed_enemy_spawner, create_random_enemy_spawner
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 from src.ecs.components.c_play_game_state import CPlayGameState
 from src.ecs.components.c_surface import CSurface
@@ -14,6 +15,12 @@ from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_hud import CTagHUD
+from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
+from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
+from src.ecs.systems.Enemy.s_fixed_enemy_spawner import system_fixed_enemy_spawner
+from src.ecs.systems.Enemy.s_lander_state import system_lander_state
+from src.ecs.systems.Enemy.s_mutant_state import system_mutant_state
+from src.ecs.systems.Enemy.s_random_enemy_spawner import system_random_enemy_spawner
 from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_astronaut_spawner import system_astronaut_spawner
@@ -62,32 +69,45 @@ class PlayScene(Scene):
 
         self.world_width: int = 0
         self.lives: int = 3
+        self.score: int = 0
+
+        self._game_timer: float = 0.0
+        self._astro_spawn_times: list[float] = []
+        self._enemy_spawn_timer: float = 0.0
+        self._total_enemies_spawned: int = 0
+
+        self.terrain_heights: list[float] = []
+        self._astro_sprite_h: int = 0
+        self.total_time = 0.0
 
     def on_enter(self, payload: dict | None = None) -> None:
-        self.player_config = ServiceLocator.config_service.get(
-            "assets/cfg/player.json"
-        )
-        self.bullets_config = ServiceLocator.config_service.get(
-            "assets/cfg/bullets.json"
-        )
-        self.world_config = ServiceLocator.config_service.get(
-            "assets/cfg/world.json"
-        )
-        self.level_config = ServiceLocator.config_service.get(
-            "assets/cfg/level_01.json"
-        )
-        self.interface_config = ServiceLocator.config_service.get(
-            "assets/cfg/interface.json"
-        )
-        self.astronauts_config = ServiceLocator.config_service.get(
-            "assets/cfg/astronauts.json"
-        )
-        self.enemies_config = ServiceLocator.config_service.get(
-            "assets/cfg/enemies.json"
-        )
-        self.scores_config = ServiceLocator.config_service.get(
-            "assets/cfg/scores.json"
-        )
+        if not self._loaded:
+            self.player_config = ServiceLocator.config_service.get(
+                "assets/cfg/player.json"
+            )
+            self.bullets_config = ServiceLocator.config_service.get(
+                "assets/cfg/bullets.json"
+            )
+            self.world_config = ServiceLocator.config_service.get(
+                "assets/cfg/world.json"
+            )
+            self.level_config = ServiceLocator.config_service.get(
+                "assets/cfg/level_01.json"
+            )
+            self.interface_config = ServiceLocator.config_service.get(
+                "assets/cfg/interface.json"
+            )
+            self.astronauts_config = ServiceLocator.config_service.get(
+                "assets/cfg/astronauts.json"
+            )
+            self.scores_config = ServiceLocator.config_service.get(
+                "assets/cfg/scores.json"
+            )
+            self.enemies_config = ServiceLocator.config_service.get(
+                "assets/cfg/enemies.json")
+            self.spawner_config = ServiceLocator.config_service.get(
+                "assets/cfg/spawner.json")
+            self._loaded = True
 
         base_world_w = self.level_config.get("world", {}).get("width", self.screen_w)
         repeats = self.world_config.get("world_repeats", 1)
@@ -152,6 +172,9 @@ class PlayScene(Scene):
             self.world, self.player_entity, score_entity, game_over_entity,
             self.screen_w, game_over_sound, self.lives
         )
+
+        create_fixed_enemy_spawner(self.world, self.level_config["enemy_spawn_events"], self.enemies_config)
+        create_random_enemy_spawner(self.world, self.spawner_config)
 
         fanfare = self.level_config.get("fanfare_sound")
         if fanfare:
@@ -251,13 +274,16 @@ class PlayScene(Scene):
             system_play_game_state(self.world, 0, dt)
             return
 
-        system_astronaut_spawner(self.world, dt)
-        system_enemy_spawner(self.world, dt)
+        self._game_timer += dt
+        self._spawn_astronauts()
+        #self._spawn_enemies(dt)
+        
+        self.total_time += dt
 
         system_movement(self.world, dt)
         system_attach_to(self.world)
         system_parallax(
-            self.world, self.player_velocity, self.screen_w, dt
+            self.world, self.player_velocity, self.screen_w, dt # type: ignore
         )
         system_screen_player_bounds(
             self.world, self.screen_w, self.screen_h, self.world_width
@@ -294,6 +320,13 @@ class PlayScene(Scene):
 
         system_player_state(self.world)
         system_burner(self.world)
+        system_lander_state(self.world, dt, self.enemies_config["Lander"], self.screen_h, self.screen_w)
+        system_mutant_state(self.world, dt, self.enemies_config["Mutant"], self.player_entity) # type: ignore
+        system_player_state(self.world)
+        system_fixed_enemy_spawner(self.world, self.total_time)
+        if self.player_entity is not None:
+            system_random_enemy_spawner(self.world, dt, self.total_time, self.player_entity,
+                                         self.enemies_config, self.screen_w, self.screen_h)
         system_animation(self.world, dt)
 
         self.world._clear_dead_entities()

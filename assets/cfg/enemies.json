@@ -25,7 +25,16 @@
         "max_total": 20,
         "spawn_interval": 3.0,
         "initial_patrol_min": 2.0,
-        "initial_patrol_max": 10.0
+        "initial_patrol_max": 10.0,
+        "patrol_area_width": 80,
+        "patrol_area_height": 60,
+        "patrol_target_radius": 10,
+        "steering_force": 2.5,
+        "patrol_upper_limit": 0.05,
+        "patrol_lower_limit": 0.60,
+
+        "descend_steering_force": 0.08,
+        "abduct_steering_force": 0.05
     },
     "Mutant": {
         "image": "assets/img/enemy_mutant.png",
@@ -42,7 +51,17 @@
         "max_concurrent": 4,
         "max_total": 15,
         "spawn_interval": 4.0,
-        "start_delay": 10.0
+        "start_delay": 10.0,
+
+        "steering_force": 4.0,
+
+        "jerk_interval_min": 1.0,
+        "jerk_interval_max": 3.0,
+
+        "jerk_strength_min": 80,
+        "jerk_strength_max": 120,
+
+        "max_jerk_distance": 300
     },
     "Baiter": {
         "image": "assets/img/enemy_baiter.png",
