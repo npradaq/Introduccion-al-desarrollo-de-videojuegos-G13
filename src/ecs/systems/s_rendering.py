@@ -15,6 +15,8 @@ def system_rendering(world: esper.World, screen: pygame.Surface,
     for entity, (c_transform, c_surface) in world.get_components(CTransform, CSurface):
         if not c_surface.visible or world.has_component(entity, CTagHUD):
             continue
+        surface_to_draw = (pygame.transform.flip(c_surface.surface, True, False)
+                           if c_surface.flip_x else c_surface.surface)
         use_camera = (
             world_width > 0
             and not world.has_component(entity, CParallax)
@@ -24,10 +26,10 @@ def system_rendering(world: esper.World, screen: pygame.Surface,
             if sx > screen_w:
                 sx -= world_width
             if -c_surface.area.w <= sx <= screen_w:
-                screen.blit(c_surface.surface, (sx, c_transform.position.y),
+                screen.blit(surface_to_draw, (sx, c_transform.position.y),
                             c_surface.area)
         else:
-            screen.blit(c_surface.surface, c_transform.position, c_surface.area)
+            screen.blit(surface_to_draw, c_transform.position, c_surface.area)
 
     for entity, (c_transform, c_text) in world.get_components(CTransform, CText):
         if not c_text.visible or world.has_component(entity, CTagHUD):
