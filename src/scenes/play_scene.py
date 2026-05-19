@@ -14,6 +14,7 @@ from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.ecs.components.c_attach_to import CAttachTo
 from src.ecs.components.tags.c_tag_hud import CTagHUD
 from src.ecs.systems.Enemy.s_baiter_state import system_baiter_state
 from src.ecs.systems.Enemy.s_fixed_enemy_spawner import system_fixed_enemy_spawner
@@ -25,7 +26,12 @@ from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_burner import system_burner
-from src.ecs.systems.s_collision import system_collision, system_enemy_bullet_player_collision
+from src.ecs.systems.s_collision import (
+    system_collision,
+    system_enemy_bullet_player_collision,
+    system_player_bullet_hits_captured_astronaut,
+    system_player_crash,
+)
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_player_input import system_player_input
@@ -118,6 +124,7 @@ class PlayScene(Scene):
         self._game_timer = 0.0
         self._total_enemies_spawned = 0
         self._enemy_spawn_timer = 0.0
+        self.lives = self.interface_config.get("hud", {}).get("lives", {}).get("count", 3)
 
         astronaut_count = self.level_config.get("astronauts_count", 10)
         spawn_duration = self.level_config.get("astronaut_spawn_duration", 5.0)
@@ -259,6 +266,22 @@ class PlayScene(Scene):
         )
         self.camera_x = player_t.position.x - self.screen_w / 2
 
+    def _lose_life_and_respawn(self) -> None:
+        self.lives = max(0, self.lives - 1)
+        if self.player_entity is not None:
+            for ent, (c_attach,) in list(self.world.get_components(CAttachTo)):
+                if c_attach.parent_id == self.player_entity:
+                    self.world.delete_entity(ent)
+            if self.world.entity_exists(self.player_entity):
+                self.world.delete_entity(self.player_entity)
+        self.player_entity = create_player(
+            self.world, self.player_config,
+            self.level_config["player_spawn"]
+        )
+        self.player_velocity = self.world.component_for_entity(
+            self.player_entity, CVelocity
+        )
+
     def _spawn_astronauts(self) -> None:
         astro_cfg = self.astronauts_config.get("Astronaut", {})
         levels = astro_cfg.get("levels", [0.70, 0.80, 0.90])
@@ -318,6 +341,19 @@ class PlayScene(Scene):
         mutant_cfg = self.enemies_config.get("Mutant", {})
         astro_cfg = self.astronauts_config.get("Astronaut", {})
         explosion_cfg = self.enemies_config.get("explosion", {})
+        if system_player_bullet_hits_captured_astronaut(self.world):
+            if self.lives > 1:
+                self._lose_life_and_respawn()
+                return
+            self._trigger_game_over()
+            return
+
+        if system_player_crash(self.world, explosion_cfg):
+            if self.lives > 1:
+                self._lose_life_and_respawn()
+                return
+            self._trigger_game_over()
+            return
         points_per_enemy = self.scores_config.get("points_per_enemy", 150)
         points_per_rescued = self.scores_config.get("points_per_rescued_astronaut", 250)
         game_over_score = self.scores_config.get("game_over_score", 2000000)

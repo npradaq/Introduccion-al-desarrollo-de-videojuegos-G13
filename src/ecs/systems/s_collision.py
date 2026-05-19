@@ -5,13 +5,16 @@ from src.ecs.components.Enemy.c_lander_state import CLanderState, LanderState
 from src.ecs.components.c_astronaut_state import AstronautPhase, CAstronautState
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_surface import CSurface
+from src.ecs.components.c_terrain import CTerrain
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
 from src.ecs.components.tags.c_tag_enemy import CTagEnemy
 from src.ecs.components.tags.c_tag_enemy_bullet import CTagEnemyBullet
 from src.ecs.components.tags.c_tag_particle import CTagParticle
 from src.ecs.components.tags.c_tag_player import CTagPlayer
+from src.ecs.components.tags.c_tag_terrain import CTagTerrain
 from src.engine.service_locator import ServiceLocator
 
 
@@ -66,10 +69,6 @@ def system_collision(world: esper.World, explosion_cfg: dict,
         return 0
 
     for e_ent, (et, es, etag) in world.get_components(CTransform, CSurface, CTagEnemy):
-        is_lander = etag.enemy_type == "Lander"
-        is_mutant = etag.enemy_type == "Mutant"
-        if not (is_lander or is_mutant):
-            continue
         if e_ent in enemies_to_delete:
             continue
 
@@ -80,10 +79,16 @@ def system_collision(world: esper.World, explosion_cfg: dict,
                 continue
             if e_rect.colliderect(b_rect):
                 bullets_to_delete.add(b_ent)
-                enemies_to_delete[e_ent] = is_lander
+                enemies_to_delete[e_ent] = etag.enemy_type
                 score_delta += points_per_enemy
-                cfg = lander_cfg if is_lander else mutant_cfg
-                sound = cfg.get("sound_die", "")
+                is_lander = etag.enemy_type == "Lander"
+                is_mutant = etag.enemy_type == "Mutant"
+                cfg = None
+                if is_lander:
+                    cfg = lander_cfg
+                elif is_mutant:
+                    cfg = mutant_cfg
+                sound = cfg.get("sound_die", "") if cfg else ""
                 if sound:
                     ServiceLocator.sounds_service.play(sound)
                 _spawn_explosion(world, et.position.copy(), explosion_cfg)
@@ -92,8 +97,8 @@ def system_collision(world: esper.World, explosion_cfg: dict,
     # Free astronauts from killed landers before deleting the entity
     falling_vel = astronaut_cfg.get("falling_velocity", 60)
     sound_fall = astronaut_cfg.get("sound_fall", "")
-    for e_ent, is_lander in enemies_to_delete.items():
-        if is_lander and world.has_component(e_ent, CLanderState):
+    for e_ent, enemy_type in enemies_to_delete.items():
+        if enemy_type == "Lander" and world.has_component(e_ent, CLanderState):
             lstate = world.component_for_entity(e_ent, CLanderState)
             if (lstate.astronaute_being_abducted is not None
                     and lstate.state == LanderState.ABDUCT):
@@ -106,6 +111,101 @@ def system_collision(world: esper.World, explosion_cfg: dict,
         world.delete_entity(ent)
 
     return score_delta
+
+
+def _player_explosion(world: esper.World, position: pygame.Vector2,
+                      explosion_cfg: dict) -> None:
+    _spawn_explosion(world, position, explosion_cfg)
+
+
+def system_player_bullet_hits_captured_astronaut(world: esper.World) -> bool:
+    bullets_to_delete: set[int] = set()
+    bullet_rects: list[tuple[int, pygame.Rect]] = []
+    for b_ent, (bt, bs) in world.get_components(CTransform, CSurface):
+        if world.has_component(b_ent, CTagBulletPlayer):
+            bullet_rects.append((
+                b_ent,
+                pygame.Rect(int(bt.position.x), int(bt.position.y), bs.area.w, bs.area.h)
+            ))
+
+    if not bullet_rects:
+        return False
+
+    captured_astro_entities = []
+    for astro_ent, (at, asurf, astate) in world.get_components(
+        CTransform, CSurface, CAstronautState
+    ):
+        if not world.has_component(astro_ent, CTagAstronaut):
+            continue
+        if astate.phase != AstronautPhase.CAPTURED:
+            continue
+        astro_rect = pygame.Rect(int(at.position.x), int(at.position.y), asurf.area.w, asurf.area.h)
+        captured_astro_entities.append((astro_ent, astro_rect))
+
+    for b_ent, b_rect in bullet_rects:
+        for _, astro_rect in captured_astro_entities:
+            if b_rect.colliderect(astro_rect):
+                bullets_to_delete.add(b_ent)
+                break
+
+    for ent in bullets_to_delete:
+        world.delete_entity(ent)
+
+    return bool(bullets_to_delete)
+
+
+def system_player_crash(world: esper.World, explosion_cfg: dict) -> bool:
+    # Find the player entity and its visual bounds.
+    players = list(world.get_components(CTransform, CSurface, CTagPlayer))
+    if not players:
+        return False
+
+    _, (p_transform, p_surface, _) = players[0]
+    player_rect = pygame.Rect(
+        int(p_transform.position.x),
+        int(p_transform.position.y),
+        p_surface.area.w,
+        p_surface.area.h,
+    )
+
+    # 1. Crash with enemies: if the player rectangle overlaps any enemy rectangle.
+    for _, (e_transform, e_surface, _) in world.get_components(
+        CTransform, CSurface, CTagEnemy
+    ):
+        enemy_rect = pygame.Rect(
+            int(e_transform.position.x),
+            int(e_transform.position.y),
+            e_surface.area.w,
+            e_surface.area.h,
+        )
+        if player_rect.colliderect(enemy_rect):
+            _player_explosion(
+                world,
+                p_transform.position + pygame.Vector2(
+                    p_surface.area.w / 2, p_surface.area.h / 2
+                ),
+                explosion_cfg,
+            )
+            return True
+
+    # 2. Crash with terrain: if the bottom of the player goes below the terrain height.
+    for _, (c_terrain, _) in world.get_components(CTerrain, CTagTerrain):
+        terrain_x = int(p_transform.position.x) % c_terrain.world_width
+        terrain_y = c_terrain.heights[terrain_x]
+        player_bottom = p_transform.position.y + p_surface.area.h
+        if player_bottom >= terrain_y:
+            _player_explosion(
+                world,
+                p_transform.position + pygame.Vector2(
+                    p_surface.area.w / 2, p_surface.area.h / 2
+                ),
+                explosion_cfg,
+            )
+            return True
+
+    # 3. Do not check astronauts here, so landing on them does not kill the player.
+    return False
+
 
 def system_enemy_bullet_player_collision(world: esper.World, explosion_cfg: dict) -> None:
     b_components = world.get_components(CTransform, CSurface, CTagEnemyBullet)

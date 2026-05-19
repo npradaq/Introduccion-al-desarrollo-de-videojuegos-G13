@@ -37,7 +37,8 @@ def system_hud(world: esper.World, screen: pygame.Surface,
     lx = lives_cfg.get("x", 88)
     ly = lives_cfg.get("y", 21)
     spacing = lives_cfg.get("spacing", 16)
-    for i in range(lives):
+    display_lives = max(0, lives - 1)
+    for i in range(display_lives):
         screen.blit(lives_img, (lx + i * spacing, ly))
 
     enemy_count = (len(list(world.get_component(CTagEnemy))))
