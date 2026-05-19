@@ -17,7 +17,7 @@ def main() -> None:
     parser.add_argument(
         "--scale", "-s",
         type=int,
-        default=1,
+        default=2,
         help="Scale factor for display (default: 1). Useful for local development."
     )
     args = parser.parse_args()

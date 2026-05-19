@@ -8,5 +8,11 @@
     "astronauts_count": 10,
     "astronaut_spawn_duration": 5.0,
     "enemy_start_delay": 2.0,
-    "fanfare_sound": "assets/snd/game_start.ogg"
+    "fanfare_sound": "assets/snd/game_start.ogg",
+    "enemy_spawn_events": [
+        { "time": 2.0, "enemy_type": "Lander", "position": { "x": 100, "y": 50 } },
+        { "time": 4.0, "enemy_type": "Lander", "position": { "x": 250, "y": 60 } },
+        { "time": 7.0, "enemy_type": "Lander", "position": { "x": 50, "y": 40 } },
+        { "time": 2.0, "enemy_type": "Mutant", "position": { "x": 300, "y": 100 } }
+    ]
 }

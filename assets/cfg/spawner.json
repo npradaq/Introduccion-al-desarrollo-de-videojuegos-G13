@@ -1,0 +1,167 @@
+{
+    "Waves": [
+        {
+            "spawn_radius_from_player": 80,
+            "wave_number": -1,
+            "time_completion": 0,
+            "initial_enemies_to_spawn": 0,
+            "enemies_to_spawn": 0,
+            "spawn_interval": 0,
+            "enemy_types": [
+                "Lander"
+            ],
+            "enemy_spawn_chances": [
+                1.0
+             ],
+             "time_enemy_buffer":
+             {
+                "Lander": 0
+             }
+        },
+        {
+            "spawn_radius_from_player": 80,
+            "wave_number": 0,
+            "time_completion": 40,
+            "initial_enemies_to_spawn": 5,
+            "enemies_to_spawn": 10,
+            "spawn_interval": 2.0,
+            "enemy_types": [
+                "Lander",
+                "Baiter"
+            ],
+            "enemy_spawn_chances": [
+                0.7,
+                0.3
+            ],
+            "time_enemy_buffer":
+            {
+                "Lander": 0,
+                "Baiter": 10
+            }
+        },
+        {
+            "spawn_radius_from_player": 80,
+            "wave_number": 1,
+            "time_completion": 50,
+            "initial_enemies_to_spawn": 8,
+            "enemies_to_spawn": 20,
+            "spawn_interval": 1.5,
+            "enemy_types": [
+                "Lander",
+                "Baiter"
+            ],
+            "enemy_spawn_chances": [
+                0.6,
+                0.4
+            ],
+            "time_enemy_buffer":
+            {
+                "Lander": 5,
+                "Baiter": 15
+            }
+        },
+        {
+            "spawn_radius_from_player": 80,
+            "wave_number": 2,
+            "time_completion": 60,
+            "initial_enemies_to_spawn": 10,
+            "enemies_to_spawn": 30,
+            "spawn_interval": 1.0,
+            "enemy_types": [
+                "Lander",
+                "Baiter",
+                "Bomber"
+            ],
+            "enemy_spawn_chances": [
+                0.5,
+                0.2,
+                0.3
+            ],
+            "time_enemy_buffer":
+            {
+                "Lander": 5,
+                "Baiter": 30,
+                "Bomber": 15
+            }
+        },
+        {
+            "spawn_radius_from_player": 80,
+            "wave_number": 3,
+            "time_completion": 80,
+            "initial_enemies_to_spawn": 15,
+            "enemies_to_spawn": 30,
+            "spawn_interval": 1.0,
+            "enemy_types": [
+                "Lander",
+                "Baiter",
+                "Bomber"
+            ],
+            "enemy_spawn_chances": [
+                0.4,
+                0.3,
+                0.3
+            ],
+            "time_enemy_buffer":
+            {
+                "Lander": 5,
+                "Baiter": 30,
+                "Bomber": 15
+            }
+        },
+        {
+            "spawn_radius_from_player": 80,
+            "wave_number": 4,
+            "time_completion": 120,
+            "initial_enemies_to_spawn": 15,
+            "enemies_to_spawn": 40,
+            "spawn_interval": 0.8,
+            "enemy_types": [
+                "Lander",
+                "Baiter",
+                "Bomber",
+                "Pod"
+            ],
+            "enemy_spawn_chances": [
+                0.3,
+                0.2,
+                0.3,
+                0.2
+            ],
+            "time_enemy_buffer":
+            {
+                "Lander": 5,
+                "Baiter": 30,
+                "Bomber": 10,
+                "Pod": 20
+
+            }
+        },
+            {
+                "spawn_radius_from_player": 80,
+                "wave_number": 5,
+                "time_completion": -1,
+                "initial_enemies_to_spawn": 15,
+                "enemies_to_spawn": -1,
+                "spawn_interval": 0.5,
+                "enemy_types": [
+                    "Lander",
+                    "Baiter",
+                    "Bomber",
+                    "Pod"
+                ],
+                "enemy_spawn_chances": [
+                    0.2,
+                    0.3,
+                    0.2,
+                    0.3
+                ],
+                "time_enemy_buffer":
+                {
+                    "Lander": 0,
+                    "Baiter": 0,
+                    "Bomber": 0,
+                    "Pod": 0
+                }
+            }
+    ]
+}
