@@ -4,12 +4,15 @@ import esper
 import pygame
 
 from src.ecs.components.c_animation import CAnimation
+from src.ecs.components.c_astronaut_spawner import CAstronautSpawner
 from src.ecs.components.c_attach_to import CAttachTo
 from src.ecs.components.c_burner import CBurner
 from src.ecs.components.c_can_blink import CCanBlink
+from src.ecs.components.c_enemy_spawner import CEnemySpawner
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_parallax import CParallax
+from src.ecs.components.c_play_game_state import CPlayGameState
 from src.ecs.components.c_player_state import CPlayerState
 from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_terrain import CTerrain
@@ -103,6 +106,12 @@ def create_input_scene(world: esper.World) -> None:
     for name, key in mappings:
         entity = world.create_entity()
         world.add_component(entity, CInputCommand(name, key))
+
+
+def create_input_menu(world: esper.World) -> None:
+    for key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+        entity = world.create_entity()
+        world.add_component(entity, CInputCommand("MENU_START", key))
 
 
 def create_bullet_player(world: esper.World, bullet_cfg: dict,
