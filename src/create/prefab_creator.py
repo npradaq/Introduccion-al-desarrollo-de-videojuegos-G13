@@ -4,15 +4,12 @@ import esper
 import pygame
 
 from src.ecs.components.c_animation import CAnimation
-from src.ecs.components.c_astronaut_spawner import CAstronautSpawner
 from src.ecs.components.c_attach_to import CAttachTo
 from src.ecs.components.c_burner import CBurner
 from src.ecs.components.c_can_blink import CCanBlink
-from src.ecs.components.c_enemy_spawner import CEnemySpawner
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_parallax import CParallax
-from src.ecs.components.c_play_game_state import CPlayGameState
 from src.ecs.components.c_player_state import CPlayerState
 from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_terrain import CTerrain
@@ -108,23 +105,18 @@ def create_input_scene(world: esper.World) -> None:
         world.add_component(entity, CInputCommand(name, key))
 
 
-def create_input_menu(world: esper.World) -> None:
-    for key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-        entity = world.create_entity()
-        world.add_component(entity, CInputCommand("MENU_START", key))
-
-
 def create_bullet_player(world: esper.World, bullet_cfg: dict,
                          player_pos: pygame.Vector2,
-                         player_size: tuple[int, int]) -> int:
+                         player_size: tuple[int, int],
+                         direction: int = 1) -> int:
     color_cfg = bullet_cfg.get("color", {"r": 255, "g": 255, "b": 255})
     color = pygame.Color(color_cfg["r"], color_cfg["g"], color_cfg["b"])
     size_cfg = bullet_cfg.get("size", {"w": 12, "h": 2})
     size = pygame.Vector2(size_cfg["w"], size_cfg["h"])
 
-    velocity_x = bullet_cfg.get("velocity", 400)
+    velocity_x = bullet_cfg.get("velocity", 400) * direction
     pos = pygame.Vector2(
-        player_pos.x + player_size[0],
+        player_pos.x + player_size[0] if direction >= 0 else player_pos.x - size.x,
         player_pos.y + player_size[1] / 2 - size.y / 2
     )
 

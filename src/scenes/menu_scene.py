@@ -1,11 +1,9 @@
 import pygame
 
-from src.create.prefab_creator import create_image, create_input_menu, create_text
-from src.ecs.components.c_input_command import CInputCommand, CommandPhase
-from src.ecs.systems.s_player_input import system_player_input
-from src.ecs.systems.s_rendering import system_rendering
+from src.create.prefab_creator import create_image, create_text
 from src.engine.scene import Scene
 from src.engine.service_locator import ServiceLocator
+from src.ecs.systems.s_rendering import system_rendering
 
 
 class MenuScene(Scene):
@@ -14,11 +12,14 @@ class MenuScene(Scene):
         self.screen_w = screen_w
         self.screen_h = screen_h
         self.interface_cfg: dict = {}
+        self._loaded = False
 
     def on_enter(self, payload: dict | None = None) -> None:
-        self.interface_cfg = ServiceLocator.config_service.get(
-            "assets/cfg/interface.json"
-        )
+        if not self._loaded:
+            self.interface_cfg = ServiceLocator.config_service.get(
+                "assets/cfg/interface.json"
+            )
+            self._loaded = True
 
         self.world.clear_database()
         menu = self.interface_cfg.get("menu", {})
@@ -39,13 +40,10 @@ class MenuScene(Scene):
                 instr["position"]
             )
 
-        create_input_menu(self.world)
-
     def process_event(self, event: pygame.event.Event) -> None:
-        system_player_input(self.world, event, self._do_action)
-
-    def _do_action(self, c_input: CInputCommand) -> None:
-        if c_input.name == "MENU_START" and c_input.phase == CommandPhase.START:
+        if event.type == pygame.KEYDOWN and event.key in (
+            pygame.K_RETURN, pygame.K_KP_ENTER
+        ):
             ServiceLocator.scenes_service.switch_to("PLAY")
 
     def update(self, dt: float) -> None:
