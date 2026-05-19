@@ -8,19 +8,22 @@ from src.ecs.components.Enemy.c_mutant_state import CMutantState, MutantState
 from src.ecs.components.c_animation import CAnimation
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.ecs.systems.Enemy.s_shoot import shoot_projectile
 
 
-def system_mutant_state(world: esper.World, delta_time: float, mutant_info: dict, player_entity: int) -> None:
+def system_mutant_state(world: esper.World, delta_time: float, mutant_info: dict, bullet_info:dict, player_entity: int) -> None:
     components = world.get_components(CMutantState, CAnimation, CTransform, CVelocity)
 
     for entity, (c_ms, c_anim, c_transform, c_velocity) in components:
         if c_ms.state == MutantState.CHASE:
-            _do_enemy_mutant_chase(world, delta_time, entity, c_ms, c_anim, c_transform, c_velocity, mutant_info, player_entity)
+            _do_enemy_mutant_chase(world, delta_time, entity, c_ms, c_anim, c_transform, c_velocity, mutant_info, player_entity, bullet_info)
 
 def _do_enemy_mutant_chase(world: esper.World, delta_time: float, enemy_entity: int,  c_ms: CMutantState, c_anim: CAnimation, 
-                           c_transform: CTransform, c_velocity: CVelocity, mutant_info: dict, player_entity: int):
+                           c_transform: CTransform, c_velocity: CVelocity, mutant_info: dict, player_entity: int, bullet_info: dict) -> None:
 
     _set_animation(c_anim, 0)
+    
+    shoot_projectile(world, player_entity, enemy_entity, delta_time, bullet_info)
 
     player_transform = world.component_for_entity(player_entity, CTransform)
 

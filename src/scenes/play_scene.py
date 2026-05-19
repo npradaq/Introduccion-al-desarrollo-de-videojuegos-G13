@@ -3,9 +3,9 @@ import random
 import pygame
 
 from src.create.prefab_creator import (
-    create_astronaut_spawner, create_bullet_player, create_enemy_spawner,
-    create_hud, create_input_player, create_input_scene, create_pause_text,
-    create_play_game_state, create_player, create_starfield, create_terrain
+    create_astronaut, create_bullet_player, create_hud,
+    create_input_player, create_input_scene,
+    create_pause_text, create_player, create_starfield, create_terrain
 )
 from src.create.prefab_creator_enemy import create_fixed_enemy_spawner, create_random_enemy_spawner
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
@@ -15,8 +15,7 @@ from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_hud import CTagHUD
-from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
-from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
+from src.ecs.systems.Enemy.s_baiter_state import system_baiter_state
 from src.ecs.systems.Enemy.s_fixed_enemy_spawner import system_fixed_enemy_spawner
 from src.ecs.systems.Enemy.s_lander_state import system_lander_state
 from src.ecs.systems.Enemy.s_mutant_state import system_mutant_state
@@ -27,9 +26,7 @@ from src.ecs.systems.s_astronaut_spawner import system_astronaut_spawner
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_burner import system_burner
-from src.ecs.systems.s_collision import system_collision
-from src.ecs.systems.s_enemy_spawner import system_enemy_spawner
-from src.ecs.systems.s_lander import system_lander
+from src.ecs.systems.s_collision import system_collision, system_enemy_bullet_player_collision
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_play_game_state import system_play_game_state
@@ -266,6 +263,47 @@ class PlayScene(Scene):
             player_t.position, (player_s.area.w, player_s.area.h)
         )
 
+    def _update_camera(self) -> None:
+        if self.player_entity is None:
+            return
+        player_t = self.world.component_for_entity(
+            self.player_entity, CTransform
+        )
+        self.camera_x = player_t.position.x - self.screen_w / 2
+
+    def _spawn_astronauts(self) -> None:
+        astro_cfg = self.astronauts_config.get("Astronaut", {})
+        levels = astro_cfg.get("levels", [0.70, 0.80, 0.90])
+        while (self._astro_spawn_times
+               and self._game_timer >= self._astro_spawn_times[0]):
+            x = random.uniform(0, self.world_width)
+            xi = int(x) % self.world_width
+            if self.terrain_heights:
+                y = self.terrain_heights[xi] - self._astro_sprite_h
+            else:
+                level_ratio = random.choice(levels)
+                y = self.screen_h * level_ratio
+            create_astronaut(self.world, astro_cfg, pygame.Vector2(x, y))
+            self._astro_spawn_times.pop(0)
+
+    def _trigger_game_over(self) -> None:
+        self._game_over = True
+        sound = self.interface_config.get("game_over", {}).get("sound", "assets/snd/game_over.ogg")
+        ServiceLocator.sounds_service.play(sound)
+        if self._game_over_entity is not None:
+            self.world.component_for_entity(
+                self._game_over_entity, CText
+            ).visible = True
+
+    def _update_score_display(self) -> None:
+        if self._score_entity is None:
+            return
+        c_text = self.world.component_for_entity(self._score_entity, CText)
+        new_text = str(self.score)
+        if c_text.text != new_text:
+            c_text.text = new_text
+            c_text.surface = None
+
     def update(self, dt: float) -> None:
         if self.is_paused:
             system_blink(self.world, dt)
@@ -276,7 +314,6 @@ class PlayScene(Scene):
 
         self._game_timer += dt
         self._spawn_astronauts()
-        #self._spawn_enemies(dt)
         
         self.total_time += dt
 
@@ -296,11 +333,7 @@ class PlayScene(Scene):
         explosion_cfg = self.enemies_config.get("explosion", {})
         points_per_enemy = self.scores_config.get("points_per_enemy", 150)
         points_per_rescued = self.scores_config.get("points_per_rescued_astronaut", 250)
-
-        system_lander(
-            self.world, dt, self.screen_h, self.world_width,
-            self.player_entity, lander_cfg, mutant_cfg
-        )
+        game_over_score = self.scores_config.get("game_over_score", 2000000)
 
         score_delta = system_collision(
             self.world, explosion_cfg, lander_cfg, mutant_cfg,
@@ -320,9 +353,11 @@ class PlayScene(Scene):
 
         system_player_state(self.world)
         system_burner(self.world)
-        system_lander_state(self.world, dt, self.enemies_config["Lander"], self.screen_h, self.screen_w)
-        system_mutant_state(self.world, dt, self.enemies_config["Mutant"], self.player_entity) # type: ignore
+        system_lander_state(self.world, dt, self.enemies_config["Lander"], self.bullets_config["enemy_bullet"], self.player_entity, self.screen_h, self.world_width) # type: ignore
+        system_mutant_state(self.world, dt, self.enemies_config["Mutant"], self.bullets_config["enemy_bullet"], self.player_entity) # type: ignore
+        system_baiter_state(self.world, dt, self.enemies_config["Baiter"], self.bullets_config["enemy_bullet"], self.player_entity) # type: ignore
         system_player_state(self.world)
+        system_enemy_bullet_player_collision(self.world, explosion_cfg)
         system_fixed_enemy_spawner(self.world, self.total_time)
         if self.player_entity is not None:
             system_random_enemy_spawner(self.world, dt, self.total_time, self.player_entity,

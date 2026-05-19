@@ -23,6 +23,6 @@
         ]
     },
     "input_velocity": 120,
-    "max_velocity": 180,
+    "max_velocity": 280,
     "burner_offset": { "x": -4, "y": 4 }
 }

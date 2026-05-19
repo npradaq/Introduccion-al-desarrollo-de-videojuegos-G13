@@ -23,8 +23,6 @@ from src.ecs.components.c_astronaut_state import AstronautPhase, CAstronautState
 from src.ecs.components.c_lander_state import CLanderState
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 from src.ecs.components.tags.c_tag_burner import CTagBurner
-from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
-from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
 from src.ecs.components.tags.c_tag_hud import CTagHUD
 from src.ecs.components.tags.c_tag_player import CTagPlayer
@@ -79,7 +77,7 @@ def create_player(world: esper.World, player_cfg: dict, spawn_cfg: dict) -> int:
         if idle_anim_cfg:
             world.add_component(burner_entity, CAnimation(idle_anim_cfg))
         world.add_component(burner_entity, CBurner(
-            idle_surface, moving_surface, idle_anim_cfg, moving_anim_cfg
+            idle_surface, moving_surface, idle_anim_cfg, moving_anim_cfg # type: ignore
         ))
         world.add_component(burner_entity, CAttachTo(entity, burner_offset))
         world.add_component(burner_entity, CTagBurner())
@@ -269,25 +267,6 @@ def create_astronauts(world: esper.World, astronaut_cfg: dict, count: int,
         create_astronaut(world, astronaut_cfg, pos)
 
 
-def create_lander_enemy(world: esper.World, lander_enemy_cfg: dict,
-                        position: pygame.Vector2) -> int:
-    surface = ServiceLocator.images_service.get(lander_enemy_cfg["image"])
-
-    patrol_min = lander_enemy_cfg.get("initial_patrol_min", 2.0)
-    patrol_max = lander_enemy_cfg.get("initial_patrol_max", 10.0)
-    initial_patrol = random.uniform(patrol_min, patrol_max)
-
-    entity = world.create_entity()
-    world.add_component(entity, CTransform(position))
-    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
-    world.add_component(entity, CSurface.from_surface(surface))
-    world.add_component(entity, CAnimation(lander_enemy_cfg["animations"]))
-    world.add_component(entity, CLanderState(initial_patrol_duration=initial_patrol))
-    world.add_component(entity, CTagLanderEnemy())
-
-    return entity
-
-
 def create_terrain(world: esper.World, world_cfg: dict, 
                    world_width: int, screen_h: int,) -> tuple[int, list[float]]:
     
@@ -343,50 +322,3 @@ def create_terrain(world: esper.World, world_cfg: dict,
     )
     world.add_component(entity, CTagTerrain())
     return entity, heights
-
-
-def create_play_game_state(world: esper.World, player_entity: int,
-                           score_entity: int | None, game_over_entity: int | None,
-                           screen_w: int, game_over_sound: str,
-                           lives: int = 3) -> int:
-    entity = world.create_entity()
-    world.add_component(entity, CPlayGameState(
-        player_entity, score_entity, game_over_entity,
-        screen_w, game_over_sound, lives
-    ))
-    return entity
-
-
-def create_astronaut_spawner(world: esper.World, spawn_times: list[float],
-                             astro_cfg: dict, world_width: int,
-                             terrain_heights: list[float], astro_sprite_h: int,
-                             screen_h: int) -> int:
-    entity = world.create_entity()
-    world.add_component(entity, CAstronautSpawner(
-        spawn_times, astro_cfg, world_width, terrain_heights, astro_sprite_h, screen_h
-    ))
-    return entity
-
-
-def create_enemy_spawner(world: esper.World, lander_cfg: dict,
-                         enemy_start_delay: float, world_width: int,
-                         screen_h: int) -> int:
-    entity = world.create_entity()
-    world.add_component(entity, CEnemySpawner(
-        lander_cfg, enemy_start_delay, world_width, screen_h
-    ))
-    return entity
-
-
-def create_mutant_enemy(world: esper.World, mutant_enemy_cfg: dict,
-                        position: pygame.Vector2) -> int:
-    surface = ServiceLocator.images_service.get(mutant_enemy_cfg["image"])
-
-    entity = world.create_entity()
-    world.add_component(entity, CTransform(position))
-    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
-    world.add_component(entity, CSurface.from_surface(surface))
-    world.add_component(entity, CAnimation(mutant_enemy_cfg["animations"]))
-    world.add_component(entity, CTagMutantEnemy())
-
-    return entity

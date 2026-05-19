@@ -3,6 +3,7 @@ import random
 import esper
 import pygame
 
+from src.create.prefab_creator_enemy import create_enemy
 from src.ecs.components.Enemy.c_lander_state import CLanderState, LanderState
 
 from src.ecs.components.Enemy.c_steer import CSteer
@@ -13,12 +14,17 @@ from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
+from src.ecs.systems.Enemy.s_shoot import shoot_projectile
+from src.engine.service_locator import ServiceLocator
+from src.engine.services.config_service import ConfigService
 
 
 def system_lander_state(
     world: esper.World,
     delta_time: float,
     lander_info: dict,
+    bullet_info: dict,
+    player_entity: int,
     screen_height: int,
     screen_width: int,
 ) -> None:
@@ -40,6 +46,8 @@ def system_lander_state(
                 lander_info,
                 screen_height,
                 screen_width,
+                player_entity,
+                bullet_info
             )
 
         elif c_ls.state == LanderState.DESCEND:
@@ -95,9 +103,13 @@ def _do_enemy_lander_patrol(
     lander_info: dict,
     screen_height: int,
     world_width: int,
+    player_entity: int,
+    bullet_info: dict
 ):
 
     _set_animation(c_anim, 0)
+    
+    shoot_projectile(world, player_entity, enemy_entity, delta_time, bullet_info) 
 
     csteer = world.component_for_entity(enemy_entity, CSteer)
 
@@ -361,6 +373,9 @@ def _do_enemy_lander_abduct(
             )
 
         world.delete_entity(enemy_entity)
+        
+        create_enemy(world, c_transform.position, 
+                     ServiceLocator.config_service.get("assets/cfg/enemies.json")["Mutant"], "Mutant")
 
 
 def _set_animation(c_a: CAnimation, num_anim: int):

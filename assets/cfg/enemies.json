@@ -19,8 +19,11 @@
         "velocity_descend": 60,
         "velocity_abduct": 50,
         "astronaut_detection_range": 120,
-        "fire_rate": 0.02,
+        "fire_rate": 3,
         "bullet_velocity": 80,
+        "acuracy_radius": 10,
+        "shoot_detection_distance": 100,
+
         "max_concurrent": 5,
         "max_total": 20,
         "spawn_interval": 3.0,
@@ -46,8 +49,11 @@
             ]
         },
         "velocity_chase": 90,
-        "fire_rate": 0.05,
+        "fire_rate": 1.5,
         "bullet_velocity": 100,
+        "acuracy_radius": 5,
+        "shoot_detection_distance": 120,
+
         "max_concurrent": 4,
         "max_total": 15,
         "spawn_interval": 4.0,
@@ -67,14 +73,20 @@
         "image": "assets/img/enemy_baiter.png",
         "sound_die": "assets/snd/enemy_die.ogg",
         "animations": {
-            "number_frames": 1,
+            "number_frames": 4,
             "list": [
-                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+                { "name": "FLY", "start": 0, "end": 3, "framerate": 8}
             ]
         },
-        "velocity_chase": 150,
-        "fire_rate": 0.08,
-        "bullet_velocity": 120
+        "velocity_approach": 100,
+        "velocity_dash": 200,
+        "steering_force": 4.0,
+        "dash_distance": 50,
+        "dash_offset_radius": 20,
+        "fire_rate": 0.3,
+        "bullet_velocity": 120,
+        "acuracy_radius": 0,
+        "shoot_detection_distance": 80
     },
     "Pod": {
         "image": "assets/img/enemy_pod.png",
@@ -98,8 +110,10 @@
             ]
         },
         "velocity_chase": 70,
-        "fire_rate": 0.01,
-        "bullet_velocity": 70
+        "fire_rate": 2.5,
+        "bullet_velocity": 70,
+        "acuracy_radius": 5,
+        "shoot_detection_distance": 40
     },
     "Bomber": {
         "image": "assets/img/enemy_bomber.png",
