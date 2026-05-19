@@ -4,8 +4,7 @@ import pygame
 from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
-from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
-from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
+from src.ecs.components.tags.c_tag_enemy import CTagEnemy
 from src.engine.service_locator import ServiceLocator
 
 
@@ -41,8 +40,7 @@ def system_hud(world: esper.World, screen: pygame.Surface,
     for i in range(lives):
         screen.blit(lives_img, (lx + i * spacing, ly))
 
-    enemy_count = (len(list(world.get_component(CTagLanderEnemy)))
-                   + len(list(world.get_component(CTagMutantEnemy))))
+    enemy_count = (len(list(world.get_component(CTagEnemy))))
     astro_count = len(list(world.get_component(CTagAstronaut)))
 
     _draw_counter(screen, font_path, hud_cfg.get("enemies_count", {}), enemy_count)

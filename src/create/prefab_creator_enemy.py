@@ -4,6 +4,7 @@ import esper
 import pygame
 
 from src.create.prefab_creator import create_sprite
+from src.ecs.components.Enemy.c_baiter_state import CBaiterState
 from src.ecs.components.Enemy.c_chase import CChase
 from src.ecs.components.Enemy.c_fixed_enemy_spawner import CEnemySpawner
 from src.ecs.components.Enemy.c_lander_state import CLanderState
@@ -13,6 +14,7 @@ from src.ecs.components.Enemy.c_shoot_delay import CShootDelay
 from src.ecs.components.Enemy.c_steer import CSteer
 from src.ecs.components.c_animation import CAnimation
 from src.ecs.components.tags.c_tag_enemy import CTagEnemy
+from src.ecs.components.tags.c_tag_enemy_bullet import CTagEnemyBullet
 from src.engine.service_locator import ServiceLocator
 
 
@@ -28,25 +30,46 @@ def create_enemy(world: esper.World, pos:pygame.Vector2, enemy_info:dict, enemy_
         case("Mutant"):
             _create_enemy_mutant(world, enemy_entity, enemy_info)
         case("Baiter"):
-            pass
+            _create_enemy_baiter(world, enemy_entity, enemy_info)
         case("Pod"):
-            pass
+            _create_enemy_pod(world, enemy_entity, enemy_info)
         case("Swarmer"):
-            pass
+            _create_enemy_swarmer(world, enemy_entity, enemy_info)
         case("Bomber"):
-            pass
+            _create_enemy_bomber(world, enemy_entity, enemy_info)
         case _:
-            pass
+            print(f"Enemy type {enemy_type} not recognized.")
 
 def _create_enemy_lander(world: esper.World, enemy_entity: int, enemy_info: dict):
     world.add_component(enemy_entity, CLanderState())
     world.add_component(enemy_entity, CSteer(None))
-    world.add_component(enemy_entity, CShootDelay(enemy_info["fire_rate"]))
+    world.add_component(enemy_entity, CShootDelay(enemy_info["fire_rate"], enemy_info["acuracy_radius"],
+                                                  enemy_info["shoot_detection_distance"], enemy_info["bullet_velocity"]))
 
 def _create_enemy_mutant(world: esper.World, enemy_entity: int, enemy_info: dict):
     world.add_component(enemy_entity, CChase())
     world.add_component(enemy_entity, CMutantState())
-    world.add_component(enemy_entity, CShootDelay(enemy_info["fire_rate"]))
+    world.add_component(enemy_entity, CShootDelay(enemy_info["fire_rate"], enemy_info["acuracy_radius"],
+                                                  enemy_info["shoot_detection_distance"], enemy_info["bullet_velocity"]))
+    
+def _create_enemy_baiter(world: esper.World, enemy_entity: int, enemy_info: dict):
+    world.add_component(enemy_entity, CBaiterState())
+    world.add_component(enemy_entity, CShootDelay(enemy_info["fire_rate"], enemy_info["acuracy_radius"],
+                                                  enemy_info["shoot_detection_distance"], enemy_info["bullet_velocity"]))
+
+def _create_enemy_pod(world: esper.World, enemy_entity: int, enemy_info: dict):
+    pass
+
+def _create_enemy_swarmer(world: esper.World, enemy_entity: int, enemy_info: dict):
+    pass
+
+def _create_enemy_bomber(world: esper.World, enemy_entity: int, enemy_info: dict):
+    pass
+
+def create_enemy_bullet(world: esper.World, pos: pygame.Vector2, direction: pygame.Vector2, bullet_info: dict):
+    bullet_surface = ServiceLocator.images_service.get(bullet_info["image"])
+    bullet_entity = create_sprite(world, pos, direction, bullet_surface)
+    world.add_component(bullet_entity, CTagEnemyBullet())
 
 def create_fixed_enemy_spawner(world: esper.World, spawn_events: list[dict], enemy_data: dict):
     spawner_entity = world.create_entity()

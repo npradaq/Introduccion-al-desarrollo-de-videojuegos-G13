@@ -4,7 +4,7 @@ import pygame
 
 from src.create.prefab_creator import (
     create_astronaut, create_bullet_player, create_hud,
-    create_input_player, create_input_scene, create_lander_enemy,
+    create_input_player, create_input_scene,
     create_pause_text, create_player, create_starfield, create_terrain
 )
 from src.create.prefab_creator_enemy import create_fixed_enemy_spawner, create_random_enemy_spawner
@@ -14,8 +14,7 @@ from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_hud import CTagHUD
-from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
-from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
+from src.ecs.systems.Enemy.s_baiter_state import system_baiter_state
 from src.ecs.systems.Enemy.s_fixed_enemy_spawner import system_fixed_enemy_spawner
 from src.ecs.systems.Enemy.s_lander_state import system_lander_state
 from src.ecs.systems.Enemy.s_mutant_state import system_mutant_state
@@ -25,8 +24,7 @@ from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_burner import system_burner
-from src.ecs.systems.s_collision import system_collision
-from src.ecs.systems.s_lander import system_lander
+from src.ecs.systems.s_collision import system_collision, system_enemy_bullet_player_collision
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_player_input import system_player_input
@@ -271,32 +269,6 @@ class PlayScene(Scene):
             create_astronaut(self.world, astro_cfg, pygame.Vector2(x, y))
             self._astro_spawn_times.pop(0)
 
-    def _spawn_enemies(self, dt: float) -> None:
-        lander_cfg = self.enemies_config.get("Lander", {})
-        max_concurrent = lander_cfg.get("max_concurrent", 5)
-        max_total = lander_cfg.get("max_total", 20)
-        spawn_interval = lander_cfg.get("spawn_interval", 3.0)
-        enemy_start_delay = self.level_config.get("enemy_start_delay", 5.0)
-
-        if self._game_timer < enemy_start_delay:
-            return
-        if self._total_enemies_spawned >= max_total:
-            return
-
-        alive = len(list(self.world.get_component(CTagLanderEnemy)))
-        if alive >= max_concurrent:
-            return
-
-        self._enemy_spawn_timer += dt
-        if self._enemy_spawn_timer < spawn_interval:
-            return
-        self._enemy_spawn_timer = 0.0
-
-        x = random.uniform(0, self.world_width)
-        y = random.uniform(self.screen_h * 0.05, self.screen_h * 0.5)
-        create_lander_enemy(self.world, lander_cfg, pygame.Vector2(x, y))
-        self._total_enemies_spawned += 1
-
     def _trigger_game_over(self) -> None:
         self._game_over = True
         sound = self.interface_config.get("game_over", {}).get("sound", "assets/snd/game_over.ogg")
@@ -324,7 +296,6 @@ class PlayScene(Scene):
 
         self._game_timer += dt
         self._spawn_astronauts()
-        #self._spawn_enemies(dt)
         
         self.total_time += dt
 
@@ -344,12 +315,7 @@ class PlayScene(Scene):
         explosion_cfg = self.enemies_config.get("explosion", {})
         points_per_enemy = self.scores_config.get("points_per_enemy", 150)
         points_per_rescued = self.scores_config.get("points_per_rescued_astronaut", 250)
-        game_over_score = self.scores_config.get("game_over_score", 2000)
-
-        system_lander(
-            self.world, dt, self.screen_h, self.world_width,
-            self.player_entity, lander_cfg, mutant_cfg
-        )
+        game_over_score = self.scores_config.get("game_over_score", 2000000)
 
         self.score += system_collision(
             self.world, explosion_cfg, lander_cfg, mutant_cfg,
@@ -362,9 +328,11 @@ class PlayScene(Scene):
 
         system_player_state(self.world)
         system_burner(self.world)
-        system_lander_state(self.world, dt, self.enemies_config["Lander"], self.screen_h, self.screen_w)
-        system_mutant_state(self.world, dt, self.enemies_config["Mutant"], self.player_entity) # type: ignore
+        system_lander_state(self.world, dt, self.enemies_config["Lander"], self.bullets_config["enemy_bullet"], self.player_entity, self.screen_h, self.world_width) # type: ignore
+        system_mutant_state(self.world, dt, self.enemies_config["Mutant"], self.bullets_config["enemy_bullet"], self.player_entity) # type: ignore
+        system_baiter_state(self.world, dt, self.enemies_config["Baiter"], self.bullets_config["enemy_bullet"], self.player_entity) # type: ignore
         system_player_state(self.world)
+        system_enemy_bullet_player_collision(self.world, explosion_cfg)
         system_fixed_enemy_spawner(self.world, self.total_time)
         if self.player_entity is not None:
             system_random_enemy_spawner(self.world, dt, self.total_time, self.player_entity,

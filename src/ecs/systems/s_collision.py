@@ -9,7 +9,9 @@ from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
 from src.ecs.components.tags.c_tag_enemy import CTagEnemy
+from src.ecs.components.tags.c_tag_enemy_bullet import CTagEnemyBullet
 from src.ecs.components.tags.c_tag_particle import CTagParticle
+from src.ecs.components.tags.c_tag_player import CTagPlayer
 from src.engine.service_locator import ServiceLocator
 
 
@@ -104,3 +106,22 @@ def system_collision(world: esper.World, explosion_cfg: dict,
         world.delete_entity(ent)
 
     return score_delta
+
+def system_enemy_bullet_player_collision(world: esper.World, explosion_cfg: dict) -> None:
+    b_components = world.get_components(CTransform, CSurface, CTagEnemyBullet)
+    player_components = world.get_components(CTransform, CSurface, CTagPlayer)
+    
+    for b_ent, (b_transform, b_surface, _) in b_components:
+        bullet_rect = pygame.Rect(int(b_transform.position.x), int(b_transform.position.y),
+                                  b_surface.area.w, b_surface.area.h)
+        
+        for p_ent, (p_transform, p_surface, _) in player_components:
+            player_rect = pygame.Rect(int(p_transform.position.x), int(p_transform.position.y),
+                                      p_surface.area.w, p_surface.area.h)
+            
+            if bullet_rect.colliderect(player_rect):
+                world.delete_entity(b_ent)
+                pos = p_transform.position + pygame.Vector2(p_surface.area.w / 2, p_surface.area.h / 2)
+                _spawn_explosion(world, pos, explosion_cfg)
+                
+                #TODO: Handle player damage or death here

@@ -3,9 +3,8 @@ import esper
 
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_terrain import CTerrain
-from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
-from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
+from src.ecs.components.tags.c_tag_enemy import CTagEnemy
 
 
 def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: int,
@@ -95,13 +94,13 @@ def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: 
                         (mm_x + mm_x_pixel, mm_y + mm_h - 1))
 
     # Draw enemies (Lander + Mutant)
-    for _, (c_transform, _) in world.get_components(CTransform, CTagLanderEnemy):
+    for _, (c_transform, _) in world.get_components(CTransform, CTagEnemy):
         _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
                             mm_x, mm_y, mm_w, mm_h, screen_h, enemy_color)
 
-    for _, (c_transform, _) in world.get_components(CTransform, CTagMutantEnemy):
+    """for _, (c_transform, _) in world.get_components(CTransform, CTagMutantEnemy):
         _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
-                            mm_x, mm_y, mm_w, mm_h, screen_h, enemy_color)
+                            mm_x, mm_y, mm_w, mm_h, screen_h, enemy_color)"""
 
     # Draw astronauts
     for _, (c_transform, _) in world.get_components(CTransform, CTagAstronaut):
