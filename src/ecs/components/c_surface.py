@@ -8,6 +8,7 @@ class CSurface:
         self.area = self.surface.get_rect()
         self.color = color
         self.visible = True
+        self.flip_x = False
 
     @classmethod
     def from_surface(cls, surface: pygame.Surface) -> "CSurface":
@@ -19,10 +20,8 @@ class CSurface:
         c_surf.surface = surface
         c_surf.area = surface.get_rect()
         c_surf.visible = True
+        c_surf.flip_x = False
         return c_surf
-        
-        
-        return instance
 
     def get_area_relative (area: pygame.Rect, pos_topleft: pygame.Vector2): # type: ignore
         new_rect = area.copy()
