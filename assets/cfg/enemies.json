@@ -19,13 +19,25 @@
         "velocity_descend": 60,
         "velocity_abduct": 50,
         "astronaut_detection_range": 120,
-        "fire_rate": 0.02,
+        "fire_rate": 3,
         "bullet_velocity": 80,
+        "acuracy_radius": 10,
+        "shoot_detection_distance": 100,
+
         "max_concurrent": 5,
         "max_total": 20,
         "spawn_interval": 3.0,
         "initial_patrol_min": 2.0,
-        "initial_patrol_max": 10.0
+        "initial_patrol_max": 10.0,
+        "patrol_area_width": 80,
+        "patrol_area_height": 60,
+        "patrol_target_radius": 10,
+        "steering_force": 2.5,
+        "patrol_upper_limit": 0.05,
+        "patrol_lower_limit": 0.60,
+
+        "descend_steering_force": 0.08,
+        "abduct_steering_force": 0.05
     },
     "Mutant": {
         "image": "assets/img/enemy_mutant.png",
@@ -37,37 +49,57 @@
             ]
         },
         "velocity_chase": 90,
-        "fire_rate": 0.05,
+        "fire_rate": 1.5,
         "bullet_velocity": 100,
+        "acuracy_radius": 5,
+        "shoot_detection_distance": 120,
+
         "max_concurrent": 4,
         "max_total": 15,
         "spawn_interval": 4.0,
-        "start_delay": 10.0
+        "start_delay": 10.0,
+
+        "steering_force": 4.0,
+
+        "jerk_interval_min": 1.0,
+        "jerk_interval_max": 3.0,
+
+        "jerk_strength_min": 80,
+        "jerk_strength_max": 120,
+
+        "max_jerk_distance": 300
     },
     "Baiter": {
         "image": "assets/img/enemy_baiter.png",
         "sound_die": "assets/snd/enemy_die.ogg",
         "animations": {
-            "number_frames": 1,
+            "number_frames": 4,
             "list": [
-                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+                { "name": "FLY", "start": 0, "end": 3, "framerate": 8}
             ]
         },
-        "velocity_chase": 150,
-        "fire_rate": 0.08,
-        "bullet_velocity": 120
+        "velocity_approach": 100,
+        "velocity_dash": 200,
+        "steering_force": 4.0,
+        "dash_distance": 50,
+        "dash_offset_radius": 20,
+        "fire_rate": 0.3,
+        "bullet_velocity": 120,
+        "acuracy_radius": 0,
+        "shoot_detection_distance": 80
     },
     "Pod": {
         "image": "assets/img/enemy_pod.png",
         "sound_die": "assets/snd/enemy_die.ogg",
         "animations": {
-            "number_frames": 1,
+            "number_frames": 3,
             "list": [
-                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+                { "name": "FLY", "start": 0, "end": 2, "framerate": 8 }
             ]
         },
-        "velocity_patrol": 30,
-        "swarmer_count": 4
+        "velocity_chase": 30,
+        "swarmer_count": 4,
+        "steering_force": 3.0
     },
     "Swarmer": {
         "image": "assets/img/enemy_swarmer.png",
@@ -75,24 +107,39 @@
         "animations": {
             "number_frames": 1,
             "list": [
-                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+                { "name": "FLY", "start": 0, "end": 0, "framerate": 8 }
             ]
         },
         "velocity_chase": 70,
-        "fire_rate": 0.01,
-        "bullet_velocity": 70
+        "fire_rate": 2.5,
+        "bullet_velocity": 70,
+        "acuracy_radius": 15,
+        "shoot_detection_distance": 40,
+        "steering_force": 5.0
     },
     "Bomber": {
         "image": "assets/img/enemy_bomber.png",
         "sound_die": "assets/snd/enemy_die.ogg",
         "animations": {
-            "number_frames": 1,
+            "number_frames": 4,
             "list": [
-                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+                { "name": "FLY", "start": 0, "end": 3, "framerate": 8 }
             ]
         },
-        "velocity_patrol": 35,
-        "bomb_drop_rate": 0.015,
-        "bomb_image": "assets/img/bomber_bomb.png"
+        "velocity_roam": 35,
+        "radius_target_change": 5,
+        "bomb_drop_rate": 2,
+        "steering_force": 2.0,
+        "target_area_margin": 100
+    },
+    "Bomb": {
+        "image": "assets/img/bomber_bomb.png",
+        "sound_explosion": "assets/snd/player_die.ogg",
+        "animations": {
+            "number_frames": 5,
+            "list": [
+                { "name": "IDLE", "start": 0, "end": 4, "framerate": 8}
+            ]
+        }
     }
 }

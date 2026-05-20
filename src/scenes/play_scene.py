@@ -3,26 +3,42 @@ import random
 import pygame
 
 from src.create.prefab_creator import (
-    create_astronaut_spawner, create_bullet_player, create_enemy_spawner,
-    create_hud, create_input_player, create_input_scene, create_pause_text,
+    create_astronaut_spawner, create_bullet_player, create_hud,
+    create_input_player, create_input_scene, create_pause_text,
     create_play_game_state, create_player, create_starfield, create_terrain
 )
+from src.create.prefab_creator_enemy import create_fixed_enemy_spawner, create_random_enemy_spawner
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 from src.ecs.components.c_play_game_state import CPlayGameState
+from src.ecs.components.c_player_state import CPlayerState
 from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.ecs.components.c_attach_to import CAttachTo
 from src.ecs.components.tags.c_tag_hud import CTagHUD
+from src.ecs.systems.Enemy.s_baiter_state import system_baiter_state
+from src.ecs.systems.Enemy.s_bomber_state import system_bomber_state
+from src.ecs.systems.Enemy.s_fixed_enemy_spawner import system_fixed_enemy_spawner
+from src.ecs.systems.Enemy.s_lander_state import system_lander_state
+from src.ecs.systems.Enemy.s_mutant_state import system_mutant_state
+from src.ecs.systems.Enemy.s_pod_state import system_pod_state
+from src.ecs.systems.Enemy.s_random_enemy_spawner import system_random_enemy_spawner
+from src.ecs.systems.Enemy.s_swarmer_state import system_swarmer_state
 from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_astronaut_spawner import system_astronaut_spawner
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_burner import system_burner
-from src.ecs.systems.s_collision import system_collision
-from src.ecs.systems.s_enemy_spawner import system_enemy_spawner
-from src.ecs.systems.s_lander import system_lander
+from src.ecs.systems.s_collision import (
+    system_collision,
+    system_bullet_pod_collision,
+    system_enemy_bomb_player_collision,
+    system_enemy_bullet_player_collision,
+    system_player_bullet_hits_captured_astronaut,
+    system_player_crash,
+)
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_play_game_state import system_play_game_state
@@ -40,6 +56,8 @@ from src.engine.service_locator import ServiceLocator
 
 
 class PlayScene(Scene):
+    # Escena principal de juego: carga recursos, controla el bucle
+    # de actualización y administra estados como vidas y puntaje.
     def __init__(self, screen_w: int, screen_h: int) -> None:
         super().__init__()
         self.screen_w = screen_w
@@ -49,6 +67,7 @@ class PlayScene(Scene):
         self.camera_x: float = 0.0
         self.player_entity: int | None = None
         self.player_velocity: CVelocity | None = None
+        # Estado del jugador, configuración cargada y contadores.
         self.player_config: dict = {}
         self.bullets_config: dict = {}
         self.world_config: dict = {}
@@ -63,6 +82,9 @@ class PlayScene(Scene):
 
         self.world_width: int = 0
         self.lives: int = 3
+        self.total_time: float = 0.0
+        self._game_over_entity: int | None = None
+        self.spawner_config: dict = {}
 
     def on_enter(self, payload: dict | None = None) -> None:
         self.player_config = ServiceLocator.config_service.get(
@@ -89,6 +111,9 @@ class PlayScene(Scene):
         self.scores_config = ServiceLocator.config_service.get(
             "assets/cfg/scores.json"
         )
+        self.spawner_config = ServiceLocator.config_service.get(
+            "assets/cfg/spawner.json"
+        )
 
         base_world_w = self.level_config.get("world", {}).get("width", self.screen_w)
         repeats = self.world_config.get("world_repeats", 1)
@@ -97,8 +122,10 @@ class PlayScene(Scene):
         self.world.clear_database()
         self.is_paused = False
         self._game_over = False
+        # Reiniciar vidas y temporizadores al comenzar nivel.
         self.camera_x = 0.0
         self.lives = self.level_config.get("lives", 3)
+        self.total_time = 0.0
 
         astronaut_count = self.level_config.get("astronauts_count", 10)
         spawn_duration = self.level_config.get("astronaut_spawn_duration", 5.0)
@@ -123,12 +150,6 @@ class PlayScene(Scene):
             self.world_width, terrain_heights, astro_sprite_h, self.screen_h
         )
 
-        lander_cfg = self.enemies_config.get("Lander", {})
-        enemy_start_delay = self.level_config.get("enemy_start_delay", 5.0)
-        create_enemy_spawner(
-            self.world, lander_cfg, enemy_start_delay, self.world_width, self.screen_h
-        )
-
         self.player_entity = create_player(
             self.world, self.player_config,
             self.level_config["player_spawn"]
@@ -144,15 +165,20 @@ class PlayScene(Scene):
         self._pause_entity = create_pause_text(
             self.world, self.interface_config, self.screen_w, self.screen_h
         )
-        game_over_entity = self._create_game_over_text()
+        self._game_over_entity = self._create_game_over_text()
 
         game_over_sound = self.interface_config.get(
             "game_over", {}
         ).get("sound", "assets/snd/game_over.ogg")
         self._game_state_entity = create_play_game_state(
-            self.world, self.player_entity, score_entity, game_over_entity,
+            self.world, self.player_entity, score_entity, self._game_over_entity,
             self.screen_w, game_over_sound, self.lives
         )
+
+        create_fixed_enemy_spawner(
+            self.world, self.level_config["enemy_spawn_events"], self.enemies_config
+        )
+        create_random_enemy_spawner(self.world, self.spawner_config)
 
         fanfare = self.level_config.get("fanfare_sound")
         if fanfare:
@@ -184,6 +210,7 @@ class PlayScene(Scene):
         system_player_input(self.world, event, self._do_action)
 
     def _do_action(self, c_input: CInputCommand) -> None:
+        # Manejo de entrada de usuario: pausa, volver al menú y control del jugador.
         if c_input.name == "PAUSE":
             if c_input.phase == CommandPhase.START and not self._game_over:
                 self.is_paused = not self.is_paused
@@ -197,10 +224,16 @@ class PlayScene(Scene):
             if c_input.phase == CommandPhase.START:
                 ServiceLocator.scenes_service.switch_to("MENU")
             return
+        elif c_input.name == "MENU_SELECT":
+            if c_input.phase == CommandPhase.START and self._game_over:
+                # Enter en pantalla de Game Over vuelve al menú principal.
+                ServiceLocator.scenes_service.switch_to("MENU")
+            return
 
         if self.is_paused or self._game_over or self.player_velocity is None:
             return
         speed = self.player_config["input_velocity"]
+        # El parámetro input_velocity define la velocidad de movimiento del jugador.
 
         if c_input.name == "PLAYER_LEFT":
             if c_input.phase == CommandPhase.START:
@@ -231,6 +264,7 @@ class PlayScene(Scene):
                 self._fire()
 
     def _fire(self) -> None:
+        # Dispara una bala desde la posición actual del jugador.
         if self.player_entity is None:
             return
         player_t = self.world.component_for_entity(
@@ -239,12 +273,49 @@ class PlayScene(Scene):
         player_s = self.world.component_for_entity(
             self.player_entity, CSurface
         )
+        player_state = self.world.component_for_entity(
+            self.player_entity, CPlayerState
+        )
         create_bullet_player(
             self.world, self.bullets_config["player_bullet"],
-            player_t.position, (player_s.area.w, player_s.area.h)
+            player_t.position, (player_s.area.w, player_s.area.h),
+            player_state.horizontal_direction
         )
 
+    def _lose_life_and_respawn(self) -> None:
+        # Resta una vida y vuelve a crear al jugador; sincroniza con CPlayGameState.
+        self.lives = max(0, self.lives - 1)
+        if self.player_entity is not None:
+            for ent, (c_attach,) in list(self.world.get_components(CAttachTo)):
+                if c_attach.parent_id == self.player_entity:
+                    self.world.delete_entity(ent)
+            if self.world.entity_exists(self.player_entity):
+                self.world.delete_entity(self.player_entity)
+        self.player_entity = create_player(
+            self.world, self.player_config,
+            self.level_config["player_spawn"]
+        )
+        self.player_velocity = self.world.component_for_entity(
+            self.player_entity, CVelocity
+        )
+        if self._game_state_entity is not None:
+            gs = self.world.component_for_entity(
+                self._game_state_entity, CPlayGameState
+            )
+            gs.lives = self.lives
+            gs.player_entity = self.player_entity
+
+    def _trigger_game_over(self) -> None:
+        # Cambia el estado a fin de juego en CPlayGameState para que el sistema
+        # maneje el parpadeo del texto y el sonido.
+        if self._game_state_entity is not None:
+            gs = self.world.component_for_entity(
+                self._game_state_entity, CPlayGameState
+            )
+            gs.lives = 0
+
     def update(self, dt: float) -> None:
+        # Ciclo principal de actualización: fisicas, enemigos, controles y HUD.
         if self.is_paused:
             system_blink(self.world, dt)
             return
@@ -253,12 +324,12 @@ class PlayScene(Scene):
             return
 
         system_astronaut_spawner(self.world, dt)
-        system_enemy_spawner(self.world, dt)
+        self.total_time += dt
 
         system_movement(self.world, dt)
         system_attach_to(self.world)
         system_parallax(
-            self.world, self.player_velocity, self.screen_w, dt
+            self.world, self.player_velocity, self.screen_w, dt # type: ignore
         )
         system_screen_player_bounds(
             self.world, self.screen_w, self.screen_h, self.world_width
@@ -269,14 +340,22 @@ class PlayScene(Scene):
         mutant_cfg = self.enemies_config.get("Mutant", {})
         astro_cfg = self.astronauts_config.get("Astronaut", {})
         explosion_cfg = self.enemies_config.get("explosion", {})
+        if system_player_bullet_hits_captured_astronaut(self.world):
+            if self.lives > 1:
+                self._lose_life_and_respawn()
+                return
+            self._trigger_game_over()
+            return
+
+        if system_player_crash(self.world, explosion_cfg):
+            if self.lives > 1:
+                self._lose_life_and_respawn()
+                return
+            self._trigger_game_over()
+            return
         points_per_enemy = self.scores_config.get("points_per_enemy", 150)
         points_per_rescued = self.scores_config.get("points_per_rescued_astronaut", 250)
         font_path = self.interface_config.get("font", "")
-
-        system_lander(
-            self.world, dt, self.screen_h, self.world_width,
-            self.player_entity, lander_cfg, mutant_cfg
-        )
 
         score_delta = system_collision(
             self.world, explosion_cfg, lander_cfg, mutant_cfg,
@@ -301,8 +380,24 @@ class PlayScene(Scene):
             self.camera_x = gs.camera_x
             self.lives = gs.lives
 
+        # El puntaje aumenta por destruir enemigos y rescatar astronautas.
         system_player_state(self.world)
         system_burner(self.world)
+        system_lander_state(self.world, dt, self.enemies_config["Lander"], self.bullets_config["enemy_bullet"], self.player_entity, self.screen_h, self.world_width) # type: ignore
+        system_mutant_state(self.world, dt, self.enemies_config["Mutant"], self.bullets_config["enemy_bullet"], self.player_entity) # type: ignore
+        system_baiter_state(self.world, dt, self.enemies_config["Baiter"], self.bullets_config["enemy_bullet"], self.player_entity) # type: ignore
+        system_bomber_state(self.world, dt, self.enemies_config["Bomber"], self.screen_h, self.world_width)
+        system_pod_state(self.world, dt, self.enemies_config["Pod"], self.player_entity) # type: ignore
+        system_swarmer_state(self.world, dt, self.enemies_config["Swarmer"], self.bullets_config["enemy_bullet"], self.player_entity)  # type: ignore
+        system_enemy_bomb_player_collision(self.world, explosion_cfg)
+        system_enemy_bullet_player_collision(self.world, explosion_cfg)
+        system_bullet_pod_collision(self.world, explosion_cfg)
+        
+        system_player_state(self.world)
+        system_fixed_enemy_spawner(self.world, self.total_time)
+        if self.player_entity is not None:
+            system_random_enemy_spawner(self.world, dt, self.total_time, self.player_entity,
+                                         self.enemies_config, self.screen_w, self.screen_h)
         system_animation(self.world, dt)
 
         self.world._clear_dead_entities()

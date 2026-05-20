@@ -22,7 +22,7 @@
             { "name": "MOVING", "start": 0, "end": 2, "framerate": 12 }
         ]
     },
-    "input_velocity": 120,
-    "max_velocity": 180,
+    "input_velocity": 220,
+    "max_velocity": 380,
     "burner_offset": { "x": -4, "y": 4 }
 }

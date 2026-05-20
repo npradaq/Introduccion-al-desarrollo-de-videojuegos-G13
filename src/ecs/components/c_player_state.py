@@ -9,3 +9,4 @@ class PlayerState(Enum):
 class CPlayerState:
     def __init__(self) -> None:
         self.state = PlayerState.IDLE
+        self.horizontal_direction = 1  # 1 = right, -1 = left

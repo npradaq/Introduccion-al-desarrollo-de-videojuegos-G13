@@ -1,5 +1,5 @@
 {
     "points_per_enemy": 150,
     "points_per_rescued_astronaut": 250,
-    "game_over_score": 2000
+    "game_over_score": 2000000
 }

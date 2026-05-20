@@ -4,13 +4,13 @@ import pygame
 from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
-from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
-from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
+from src.ecs.components.tags.c_tag_enemy import CTagEnemy
 from src.engine.service_locator import ServiceLocator
 
 
 def system_hud(world: esper.World, screen: pygame.Surface,
                interface_cfg: dict, lives: int) -> None:
+    # Dibuja la interfaz superior: fondo, texto, vidas e indicadores.
     hud_cfg = interface_cfg.get("hud", {})
     font_path = interface_cfg.get("font", "")
     header_h = hud_cfg.get("header_height", 32)
@@ -21,11 +21,13 @@ def system_hud(world: esper.World, screen: pygame.Surface,
     lc = hud_cfg.get("header_line_color", {"r": 0, "g": 0, "b": 255})
     pygame.draw.line(screen, (lc["r"], lc["g"], lc["b"]),
                      (0, header_h - 1), (screen_w, header_h - 1))
+    # La línea separa el HUD del área de juego.
 
     from src.ecs.components.tags.c_tag_hud import CTagHUD
     for entity, (c_transform, c_text) in world.get_components(CTransform, CText):
         if not c_text.visible or not world.has_component(entity, CTagHUD):
             continue
+        # Renderiza solo los textos visibles del HUD.
         if c_text.surface is None:
             font = ServiceLocator.fonts_service.get(c_text.font_path, c_text.size)
             c_text.surface = font.render(c_text.text, True, c_text.color)
@@ -38,11 +40,12 @@ def system_hud(world: esper.World, screen: pygame.Surface,
     lx = lives_cfg.get("x", 88)
     ly = lives_cfg.get("y", 21)
     spacing = lives_cfg.get("spacing", 16)
-    for i in range(lives):
+    display_lives = max(0, lives - 1)
+    # Mostrar una vida menos porque la vida actual ya está en juego.
+    for i in range(display_lives):
         screen.blit(lives_img, (lx + i * spacing, ly))
 
-    enemy_count = (len(list(world.get_component(CTagLanderEnemy)))
-                   + len(list(world.get_component(CTagMutantEnemy))))
+    enemy_count = (len(list(world.get_component(CTagEnemy))))
     astro_count = len(list(world.get_component(CTagAstronaut)))
 
     _draw_counter(screen, font_path, hud_cfg.get("enemies_count", {}), enemy_count)

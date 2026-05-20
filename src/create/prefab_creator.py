@@ -8,7 +8,6 @@ from src.ecs.components.c_astronaut_spawner import CAstronautSpawner
 from src.ecs.components.c_attach_to import CAttachTo
 from src.ecs.components.c_burner import CBurner
 from src.ecs.components.c_can_blink import CCanBlink
-from src.ecs.components.c_enemy_spawner import CEnemySpawner
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_parallax import CParallax
@@ -20,11 +19,8 @@ from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.c_astronaut_state import AstronautPhase, CAstronautState
-from src.ecs.components.c_lander_state import CLanderState
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 from src.ecs.components.tags.c_tag_burner import CTagBurner
-from src.ecs.components.tags.c_tag_lander_enemy import CTagLanderEnemy
-from src.ecs.components.tags.c_tag_mutant_enemy import CTagMutantEnemy
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
 from src.ecs.components.tags.c_tag_hud import CTagHUD
 from src.ecs.components.tags.c_tag_player import CTagPlayer
@@ -32,6 +28,20 @@ from src.ecs.components.tags.c_tag_star import CTagStar
 from src.ecs.components.tags.c_tag_terrain import CTagTerrain
 from src.engine.perlin import octave_noise1d, seed
 from src.engine.service_locator import ServiceLocator
+
+
+def create_sprite(world: esper.World, pos:pygame.Vector2,
+                    vel:pygame.Vector2, surface: pygame.Surface) -> int:
+    
+    sprite_entity = world.create_entity()
+    world.add_component(sprite_entity,
+                        CTransform(pos))
+    world.add_component(sprite_entity,
+                        CVelocity(vel))
+    world.add_component(sprite_entity,
+                        CSurface.from_surface(surface))
+    return sprite_entity
+
 
 
 def create_player(world: esper.World, player_cfg: dict, spawn_cfg: dict) -> int:
@@ -65,7 +75,7 @@ def create_player(world: esper.World, player_cfg: dict, spawn_cfg: dict) -> int:
         if idle_anim_cfg:
             world.add_component(burner_entity, CAnimation(idle_anim_cfg))
         world.add_component(burner_entity, CBurner(
-            idle_surface, moving_surface, idle_anim_cfg, moving_anim_cfg
+            idle_surface, moving_surface, idle_anim_cfg, moving_anim_cfg # type: ignore
         ))
         world.add_component(burner_entity, CAttachTo(entity, burner_offset))
         world.add_component(burner_entity, CTagBurner())
@@ -90,6 +100,8 @@ def create_input_scene(world: esper.World) -> None:
     mappings = [
         ("PAUSE", pygame.K_p),
         ("BACK_TO_MENU", pygame.K_BACKSPACE),
+        ("MENU_SELECT", pygame.K_RETURN),
+        ("MENU_SELECT", pygame.K_KP_ENTER),
     ]
     for name, key in mappings:
         entity = world.create_entity()
@@ -104,15 +116,16 @@ def create_input_menu(world: esper.World) -> None:
 
 def create_bullet_player(world: esper.World, bullet_cfg: dict,
                          player_pos: pygame.Vector2,
-                         player_size: tuple[int, int]) -> int:
+                         player_size: tuple[int, int],
+                         direction: int = 1) -> int:
     color_cfg = bullet_cfg.get("color", {"r": 255, "g": 255, "b": 255})
     color = pygame.Color(color_cfg["r"], color_cfg["g"], color_cfg["b"])
     size_cfg = bullet_cfg.get("size", {"w": 12, "h": 2})
     size = pygame.Vector2(size_cfg["w"], size_cfg["h"])
 
-    velocity_x = bullet_cfg.get("velocity", 400)
+    velocity_x = bullet_cfg.get("velocity", 400) * direction
     pos = pygame.Vector2(
-        player_pos.x + player_size[0],
+        player_pos.x + player_size[0] if direction >= 0 else player_pos.x - size.x,
         player_pos.y + player_size[1] / 2 - size.y / 2
     )
 
@@ -255,25 +268,6 @@ def create_astronauts(world: esper.World, astronaut_cfg: dict, count: int,
         create_astronaut(world, astronaut_cfg, pos)
 
 
-def create_lander_enemy(world: esper.World, lander_enemy_cfg: dict,
-                        position: pygame.Vector2) -> int:
-    surface = ServiceLocator.images_service.get(lander_enemy_cfg["image"])
-
-    patrol_min = lander_enemy_cfg.get("initial_patrol_min", 2.0)
-    patrol_max = lander_enemy_cfg.get("initial_patrol_max", 10.0)
-    initial_patrol = random.uniform(patrol_min, patrol_max)
-
-    entity = world.create_entity()
-    world.add_component(entity, CTransform(position))
-    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
-    world.add_component(entity, CSurface.from_surface(surface))
-    world.add_component(entity, CAnimation(lander_enemy_cfg["animations"]))
-    world.add_component(entity, CLanderState(initial_patrol_duration=initial_patrol))
-    world.add_component(entity, CTagLanderEnemy())
-
-    return entity
-
-
 def create_terrain(world: esper.World, world_cfg: dict, 
                    world_width: int, screen_h: int,) -> tuple[int, list[float]]:
     
@@ -361,28 +355,4 @@ def create_astronaut_spawner(world: esper.World, spawn_times: list[float],
     world.add_component(entity, CAstronautSpawner(
         spawn_times, astro_cfg, world_width, terrain_heights, astro_sprite_h, screen_h
     ))
-    return entity
-
-
-def create_enemy_spawner(world: esper.World, lander_cfg: dict,
-                         enemy_start_delay: float, world_width: int,
-                         screen_h: int) -> int:
-    entity = world.create_entity()
-    world.add_component(entity, CEnemySpawner(
-        lander_cfg, enemy_start_delay, world_width, screen_h
-    ))
-    return entity
-
-
-def create_mutant_enemy(world: esper.World, mutant_enemy_cfg: dict,
-                        position: pygame.Vector2) -> int:
-    surface = ServiceLocator.images_service.get(mutant_enemy_cfg["image"])
-
-    entity = world.create_entity()
-    world.add_component(entity, CTransform(position))
-    world.add_component(entity, CVelocity(pygame.Vector2(0, 0)))
-    world.add_component(entity, CSurface.from_surface(surface))
-    world.add_component(entity, CAnimation(mutant_enemy_cfg["animations"]))
-    world.add_component(entity, CTagMutantEnemy())
-
     return entity

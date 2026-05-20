@@ -38,14 +38,12 @@ def system_astronaut(world: esper.World, astronaut_cfg: dict,
                 ct.position.y = cstate.land_y
                 cv.velocity.y = 0
                 cstate.phase = AstronautPhase.LANDED
-                canim.paused = False
 
         elif cstate.phase == AstronautPhase.RESCUED:
             if ct.position.y >= cstate.land_y:
                 ct.position.y = cstate.land_y
                 cv.velocity.y = 0
                 cstate.phase = AstronautPhase.LANDED
-                canim.paused = False
                 score_delta += points_per_rescued
                 if sound_rescued:
                     ServiceLocator.sounds_service.play(sound_rescued)
