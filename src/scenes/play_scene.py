@@ -17,21 +17,19 @@ from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.c_attach_to import CAttachTo
 from src.ecs.components.tags.c_tag_hud import CTagHUD
 from src.ecs.systems.Enemy.s_baiter_state import system_baiter_state
+from src.ecs.systems.Enemy.s_bomber_state import system_bomber_state
 from src.ecs.systems.Enemy.s_fixed_enemy_spawner import system_fixed_enemy_spawner
 from src.ecs.systems.Enemy.s_lander_state import system_lander_state
 from src.ecs.systems.Enemy.s_mutant_state import system_mutant_state
+from src.ecs.systems.Enemy.s_pod_state import system_pod_state
 from src.ecs.systems.Enemy.s_random_enemy_spawner import system_random_enemy_spawner
+from src.ecs.systems.Enemy.s_swarmer_state import system_swarmer_state
 from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_burner import system_burner
-from src.ecs.systems.s_collision import (
-    system_collision,
-    system_enemy_bullet_player_collision,
-    system_player_bullet_hits_captured_astronaut,
-    system_player_crash,
-)
+from src.ecs.systems.s_collision import system_bullet_pod_collision, system_collision, system_enemy_bomb_player_collision, system_enemy_bullet_player_collision
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_player_input import system_player_input
@@ -391,8 +389,14 @@ class PlayScene(Scene):
         system_lander_state(self.world, dt, self.enemies_config["Lander"], self.bullets_config["enemy_bullet"], self.player_entity, self.screen_h, self.world_width) # type: ignore
         system_mutant_state(self.world, dt, self.enemies_config["Mutant"], self.bullets_config["enemy_bullet"], self.player_entity) # type: ignore
         system_baiter_state(self.world, dt, self.enemies_config["Baiter"], self.bullets_config["enemy_bullet"], self.player_entity) # type: ignore
-        system_player_state(self.world)
+        system_bomber_state(self.world, dt, self.enemies_config["Bomber"], self.screen_h, self.world_width)
+        system_pod_state(self.world, dt, self.enemies_config["Pod"], self.player_entity) # type: ignore
+        system_swarmer_state(self.world, dt, self.enemies_config["Swarmer"], self.bullets_config["enemy_bullet"], self.player_entity)  # type: ignore
+        system_enemy_bomb_player_collision(self.world, explosion_cfg)
         system_enemy_bullet_player_collision(self.world, explosion_cfg)
+        system_bullet_pod_collision(self.world, explosion_cfg)
+        
+        system_player_state(self.world)
         system_fixed_enemy_spawner(self.world, self.total_time)
         if self.player_entity is not None:
             system_random_enemy_spawner(self.world, dt, self.total_time, self.player_entity,
