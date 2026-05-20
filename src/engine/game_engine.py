@@ -73,6 +73,9 @@ class GameEngine:
                 self.is_running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 self.is_running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+                # Presionar 'q' cierra el juego completamente.
+                self.is_running = False
             else:
                 self.scene_manager.process_event(event)
 

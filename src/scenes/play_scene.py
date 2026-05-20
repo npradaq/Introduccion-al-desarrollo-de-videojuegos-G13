@@ -29,7 +29,14 @@ from src.ecs.systems.s_astronaut import system_astronaut
 from src.ecs.systems.s_attach_to import system_attach_to
 from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_burner import system_burner
-from src.ecs.systems.s_collision import system_bullet_pod_collision, system_collision, system_enemy_bomb_player_collision, system_enemy_bullet_player_collision
+from src.ecs.systems.s_collision import (
+    system_collision,
+    system_bullet_pod_collision, 
+    system_enemy_bomb_player_collision,
+    system_enemy_bullet_player_collision,
+    system_player_bullet_hits_captured_astronaut,
+    system_player_crash,
+)
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_player_input import system_player_input
