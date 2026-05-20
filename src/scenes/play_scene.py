@@ -94,6 +94,11 @@ class PlayScene(Scene):
         self.total_time: float = 0.0
         self._game_over_entity: int | None = None
         self.spawner_config: dict = {}
+        self.score: int = 0
+        # Umbrales ya otorgados para vidas extra (evita duplicados)
+        self._extra_lives_awarded: set[int] = set()
+        # Siguiente umbral para el extra_life_score_2 (se incrementa cada vez)
+        self._extra_life2_next_threshold: int | None = None
 
         # Pausa tras la muerte del jugador: deja correr solo la animación
         # de la explosión antes de reiniciar enemigos y astronautas.
@@ -144,6 +149,12 @@ class PlayScene(Scene):
         self._death_pause_timer = 0.0
         self._pending_game_over = False
         self._death_pause_duration = self.level_config.get("death_pause_duration", 3.0)
+        self.score = 0
+        # Reiniciar seguimiento de vidas extra al iniciar nivel
+        self._extra_lives_awarded = set()
+        # Inicializar umbral recurrente para extra_life_score_2
+        v2 = self.scores_config.get("extra_life_score_2") if self.scores_config else None
+        self._extra_life2_next_threshold = v2 if isinstance(v2, int) else None
 
         astronaut_count = self.level_config.get("astronauts_count", 10)
         spawn_duration = self.level_config.get("astronaut_spawn_duration", 5.0)
@@ -520,6 +531,9 @@ class PlayScene(Scene):
             self.camera_x = gs.camera_x
             self.lives = gs.lives
 
+        # Comprobar y otorgar vidas extra al alcanzar umbrales de score
+        self._check_extra_lives()
+
         # El puntaje aumenta por destruir enemigos y rescatar astronautas.
         system_player_state(self.world)
         system_burner(self.world)
@@ -553,3 +567,35 @@ class PlayScene(Scene):
         system_minimap(self.world, screen, self.camera_x, self.world_width,
                       self.screen_w, self.screen_h, self.interface_config,
                       self.player_entity)
+
+    def _check_extra_lives(self) -> None:
+        """Otorga vidas extra al alcanzar umbrales definidos en scores.json.
+        Soporta `extra_life_score_1` y `extra_life_score_2`. Cada umbral se
+        otorga solo una vez por partida.
+        """
+        if not self.scores_config:
+            return
+
+        thresholds: list[int] = []
+        v1 = self.scores_config.get("extra_life_score_1")
+        v2 = self.scores_config.get("extra_life_score_2")
+        if isinstance(v1, int):
+            thresholds.append(v1)
+        if isinstance(v2, int):
+            thresholds.append(v2)
+
+        # extra_life_score_1: otorgar una vez cuando se alcanza (no repetible)
+        if v1 is not None and isinstance(v1, int):
+            if self.score >= v1 and v1 not in self._extra_lives_awarded:
+                self.lives += 1
+                self._extra_lives_awarded.add(v1)
+
+        # extra_life_score_2: umbral recurrente, se otorga cada vez que
+        # se alcanza el siguiente múltiplo (p. ej. 20000, 30000,...)
+        if v2 is not None and isinstance(v2, int) and v2 > 0:
+            if self._extra_life2_next_threshold is None:
+                self._extra_life2_next_threshold = v2
+            while self._extra_life2_next_threshold is not None and self.score >= self._extra_life2_next_threshold:
+                self.lives += 1
+                # avanzar al siguiente umbral recurrente
+                self._extra_life2_next_threshold += v2
