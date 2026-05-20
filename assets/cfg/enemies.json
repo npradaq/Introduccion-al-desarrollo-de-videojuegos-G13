@@ -119,13 +119,25 @@
         "image": "assets/img/enemy_bomber.png",
         "sound_die": "assets/snd/enemy_die.ogg",
         "animations": {
-            "number_frames": 1,
+            "number_frames": 4,
             "list": [
-                { "name": "FLY", "start": 0, "end": 0, "framerate": 1 }
+                { "name": "FLY", "start": 0, "end": 3, "framerate": 8 }
             ]
         },
-        "velocity_patrol": 35,
-        "bomb_drop_rate": 0.015,
-        "bomb_image": "assets/img/bomber_bomb.png"
+        "velocity_roam": 35,
+        "radius_target_change": 5,
+        "bomb_drop_rate": 2,
+        "steering_force": 2.0,
+        "target_area_margin": 100
+    },
+    "Bomb": {
+        "image": "assets/img/bomber_bomb.png",
+        "sound_explosion": "assets/snd/player_die.ogg",
+        "animations": {
+            "number_frames": 5,
+            "list": [
+                { "name": "IDLE", "start": 0, "end": 4, "framerate": 8}
+            ]
+        }
     }
 }

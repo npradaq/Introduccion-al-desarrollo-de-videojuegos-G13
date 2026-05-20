@@ -9,6 +9,7 @@ from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
 from src.ecs.components.tags.c_tag_enemy import CTagEnemy
+from src.ecs.components.tags.c_tag_enemy_bomb import CTagEnemyBomb
 from src.ecs.components.tags.c_tag_enemy_bullet import CTagEnemyBullet
 from src.ecs.components.tags.c_tag_particle import CTagParticle
 from src.ecs.components.tags.c_tag_player import CTagPlayer
@@ -68,7 +69,13 @@ def system_collision(world: esper.World, explosion_cfg: dict,
     for e_ent, (et, es, etag) in world.get_components(CTransform, CSurface, CTagEnemy):
         is_lander = etag.enemy_type == "Lander"
         is_mutant = etag.enemy_type == "Mutant"
-        if not (is_lander or is_mutant):
+        is_bomber = etag.enemy_type == "Bomber"
+        is_baiter = etag.enemy_type == "Baiter"
+        is_bomb = etag.enemy_type == "Bomb"
+        is_bullet = etag.enemy_type == "Bullet"
+        is_enemy = (is_lander or is_mutant or is_bomber 
+                    or is_baiter or is_bomb or is_bullet) 
+        if not (is_enemy):
             continue
         if e_ent in enemies_to_delete:
             continue
@@ -120,6 +127,25 @@ def system_enemy_bullet_player_collision(world: esper.World, explosion_cfg: dict
                                       p_surface.area.w, p_surface.area.h)
             
             if bullet_rect.colliderect(player_rect):
+                world.delete_entity(b_ent)
+                pos = p_transform.position + pygame.Vector2(p_surface.area.w / 2, p_surface.area.h / 2)
+                _spawn_explosion(world, pos, explosion_cfg)
+                
+                #TODO: Handle player damage or death here
+                
+def system_enemy_bomb_player_collision(world: esper.World, explosion_cfg: dict) -> None:
+    bomb_components = world.get_components(CTransform, CSurface, CTagEnemyBomb)
+    player_components = world.get_components(CTransform, CSurface, CTagPlayer)
+    
+    for b_ent, (b_transform, b_surface, _) in bomb_components:
+        bomb_rect = pygame.Rect(int(b_transform.position.x), int(b_transform.position.y),
+                                  b_surface.area.w, b_surface.area.h)
+        
+        for p_ent, (p_transform, p_surface, _) in player_components:
+            player_rect = pygame.Rect(int(p_transform.position.x), int(p_transform.position.y),
+                                      p_surface.area.w, p_surface.area.h)
+            
+            if bomb_rect.colliderect(player_rect):
                 world.delete_entity(b_ent)
                 pos = p_transform.position + pygame.Vector2(p_surface.area.w / 2, p_surface.area.h / 2)
                 _spawn_explosion(world, pos, explosion_cfg)
