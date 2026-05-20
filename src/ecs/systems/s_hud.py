@@ -22,9 +22,9 @@ def system_hud(world: esper.World, screen: pygame.Surface,
     pygame.draw.line(screen, (lc["r"], lc["g"], lc["b"]),
                      (0, header_h - 1), (screen_w, header_h - 1))
 
-    text_components = world.get_components(CTransform, CText)
-    for _, (c_transform, c_text) in text_components:
-        if not c_text.visible:
+    from src.ecs.components.tags.c_tag_hud import CTagHUD
+    for entity, (c_transform, c_text) in world.get_components(CTransform, CText):
+        if not c_text.visible or not world.has_component(entity, CTagHUD):
             continue
         if c_text.surface is None:
             font = ServiceLocator.fonts_service.get(c_text.font_path, c_text.size)

@@ -97,23 +97,23 @@ def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: 
     # Draw enemies (Lander + Mutant)
     for _, (c_transform, _) in world.get_components(CTransform, CTagLanderEnemy):
         _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
-                            mm_x, mm_y, mm_w, mm_h, screen_h, enemy_color)
+                            mm_x, mm_y, mm_w, mm_h, screen_h, world_width, enemy_color)
 
     for _, (c_transform, _) in world.get_components(CTransform, CTagMutantEnemy):
         _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
-                            mm_x, mm_y, mm_w, mm_h, screen_h, enemy_color)
+                            mm_x, mm_y, mm_w, mm_h, screen_h, world_width, enemy_color)
 
     # Draw astronauts
     for _, (c_transform, _) in world.get_components(CTransform, CTagAstronaut):
         _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
-                            mm_x, mm_y, mm_w, mm_h, screen_h, astro_color)
+                            mm_x, mm_y, mm_w, mm_h, screen_h, world_width, astro_color)
 
     # Draw player indicator (white)
     if player_entity is not None:
         try:
             c_transform = world.component_for_entity(player_entity, CTransform)
             _draw_minimap_entity(screen, c_transform, minimap_start, minimap_range,
-                                mm_x, mm_y, mm_w, mm_h, screen_h,
+                                mm_x, mm_y, mm_w, mm_h, screen_h, world_width,
                                 pygame.Color(255, 255, 255))
         except (KeyError, IndexError):
             pass
@@ -141,15 +141,15 @@ def system_minimap(world, screen: pygame.Surface, camera_x: float, world_width: 
 def _draw_minimap_entity(screen: pygame.Surface, c_transform: CTransform,
                          minimap_start: float, minimap_range: float,
                          mm_x: int, mm_y: int, mm_w: int, mm_h: int,
-                         screen_h: int, color: pygame.Color) -> None:
-    """Helper to draw an entity on the minimap."""
+                         screen_h: int, world_width: int,
+                         color: pygame.Color) -> None:
     pos = c_transform.position
-
-    # Calculate relative position within minimap range
-    rel_x = pos.x - minimap_start
-    mx = int((rel_x / minimap_range) * mm_w)
     my = int((pos.y / screen_h) * mm_h)
+    my = max(0, min(my, mm_h - 1))
 
-    # Draw if within minimap bounds
-    if 0 <= mx < mm_w and 0 <= my < mm_h:
-        pygame.draw.rect(screen, color, (mm_x + mx, mm_y + my, 2, 2))
+    for wx in (pos.x, pos.x - world_width, pos.x + world_width):
+        rel_x = wx - minimap_start
+        mx = int((rel_x / minimap_range) * mm_w)
+        if 0 <= mx < mm_w:
+            pygame.draw.rect(screen, color, (mm_x + mx, mm_y + my, 2, 2))
+            break

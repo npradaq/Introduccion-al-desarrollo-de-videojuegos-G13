@@ -19,5 +19,6 @@ def system_screen_bullet(world: esper.World, dt: float,
             pos_x = world.component_for_entity(entity, CTransform).position.x
         except Exception:
             continue
-        if pos_x < camera_x or pos_x > camera_x + screen_w:
+        screen_x = (pos_x - camera_x) % screen_w if screen_w > 0 else pos_x
+        if screen_x > screen_w:
             world.delete_entity(entity)

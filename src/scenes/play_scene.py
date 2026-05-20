@@ -27,6 +27,7 @@ from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_parallax import system_parallax
 from src.ecs.systems.s_play_game_state import system_play_game_state
 from src.ecs.systems.s_player_input import system_player_input
+from src.ecs.systems.s_player_rescue import system_player_rescue
 from src.ecs.systems.s_player_state import system_player_state
 from src.ecs.systems.s_hud import system_hud
 from src.ecs.systems.s_rendering import system_rendering
@@ -270,6 +271,7 @@ class PlayScene(Scene):
         explosion_cfg = self.enemies_config.get("explosion", {})
         points_per_enemy = self.scores_config.get("points_per_enemy", 150)
         points_per_rescued = self.scores_config.get("points_per_rescued_astronaut", 250)
+        font_path = self.interface_config.get("font", "")
 
         system_lander(
             self.world, dt, self.screen_h, self.world_width,
@@ -278,9 +280,16 @@ class PlayScene(Scene):
 
         score_delta = system_collision(
             self.world, explosion_cfg, lander_cfg, mutant_cfg,
-            astro_cfg, points_per_enemy
+            astro_cfg, points_per_enemy, self.world_width
         )
-        score_delta += system_astronaut(self.world, astro_cfg, points_per_rescued)
+        score_delta += system_player_rescue(
+            self.world, points_per_rescued,
+            self.camera_x, self.world_width, astro_cfg, font_path
+        )
+        score_delta += system_astronaut(
+            self.world, astro_cfg, points_per_rescued,
+            self.camera_x, self.world_width, font_path
+        )
 
         system_play_game_state(self.world, score_delta, dt)
 

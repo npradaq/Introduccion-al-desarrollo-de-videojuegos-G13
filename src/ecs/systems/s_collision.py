@@ -45,9 +45,18 @@ def _free_captured_astronaut(world: esper.World, astro_id: int,
         ServiceLocator.sounds_service.play(sound_fall)
 
 
+def _rects_collide_wrapped(r_a: pygame.Rect, r_b: pygame.Rect,
+                           world_width: int) -> bool:
+    for offset in (0, world_width, -world_width):
+        if r_a.colliderect(r_b.move(offset, 0)):
+            return True
+    return False
+
+
 def system_collision(world: esper.World, explosion_cfg: dict,
                      lander_cfg: dict, mutant_cfg: dict,
-                     astronaut_cfg: dict, points_per_enemy: int) -> int:
+                     astronaut_cfg: dict, points_per_enemy: int,
+                     world_width: int = 0) -> int:
     score_delta = 0
     bullets_to_delete: set[int] = set()
     enemies_to_delete: dict[int, bool] = {}  # entity -> is_lander
@@ -77,7 +86,7 @@ def system_collision(world: esper.World, explosion_cfg: dict,
         for b_ent, b_rect in bullet_rects:
             if b_ent in bullets_to_delete:
                 continue
-            if e_rect.colliderect(b_rect):
+            if _rects_collide_wrapped(e_rect, b_rect, world_width):
                 bullets_to_delete.add(b_ent)
                 enemies_to_delete[e_ent] = is_lander
                 score_delta += points_per_enemy

@@ -331,6 +331,16 @@ def create_terrain(world: esper.World, world_cfg: dict,
     return entity, heights
 
 
+def create_score_popup(world: esper.World, screen_x: float, screen_y: float,
+                       points: int, font_path: str, size: int = 6) -> int:
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(pygame.Vector2(screen_x, screen_y)))
+    c_text = CText(f"+{points}", font_path, size, (255, 255, 100))
+    world.add_component(entity, c_text)
+    world.add_component(entity, CLifetime(2.0))
+    return entity
+
+
 def create_play_game_state(world: esper.World, player_entity: int,
                            score_entity: int | None, game_over_entity: int | None,
                            screen_w: int, game_over_sound: str,
