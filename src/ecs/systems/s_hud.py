@@ -23,9 +23,9 @@ def system_hud(world: esper.World, screen: pygame.Surface,
                      (0, header_h - 1), (screen_w, header_h - 1))
     # La línea separa el HUD del área de juego.
 
-    text_components = world.get_components(CTransform, CText)
-    for _, (c_transform, c_text) in text_components:
-        if not c_text.visible:
+    from src.ecs.components.tags.c_tag_hud import CTagHUD
+    for entity, (c_transform, c_text) in world.get_components(CTransform, CText):
+        if not c_text.visible or not world.has_component(entity, CTagHUD):
             continue
         # Renderiza solo los textos visibles del HUD.
         if c_text.surface is None:

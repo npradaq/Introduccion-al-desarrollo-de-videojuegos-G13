@@ -2,7 +2,6 @@ import asyncio
 
 import pygame
 
-from src.engine.config_loader import load_window_config
 from src.engine.scene_manager import SceneManager
 from src.engine.service_locator import ServiceLocator
 from src.scenes.menu_scene import MenuScene
@@ -11,7 +10,7 @@ from src.scenes.play_scene import PlayScene
 
 class GameEngine:
     def __init__(self, scale: int = 1) -> None:
-        window_cfg = load_window_config("assets/cfg/window.json")
+        window_cfg = ServiceLocator.config_service.get("assets/cfg/window.json")
 
         title = window_cfg.get("title", "Defender")
         size = window_cfg.get("size", {})

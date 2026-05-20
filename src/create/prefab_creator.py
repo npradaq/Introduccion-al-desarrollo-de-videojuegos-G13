@@ -4,12 +4,14 @@ import esper
 import pygame
 
 from src.ecs.components.c_animation import CAnimation
+from src.ecs.components.c_astronaut_spawner import CAstronautSpawner
 from src.ecs.components.c_attach_to import CAttachTo
 from src.ecs.components.c_burner import CBurner
 from src.ecs.components.c_can_blink import CCanBlink
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_parallax import CParallax
+from src.ecs.components.c_play_game_state import CPlayGameState
 from src.ecs.components.c_player_state import CPlayerState
 from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_terrain import CTerrain
@@ -17,7 +19,6 @@ from src.ecs.components.c_text import CText
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.c_astronaut_state import AstronautPhase, CAstronautState
-from src.ecs.components.c_lander_state import CLanderState
 from src.ecs.components.tags.c_tag_astronaut import CTagAstronaut
 from src.ecs.components.tags.c_tag_burner import CTagBurner
 from src.ecs.components.tags.c_tag_bullet_player import CTagBulletPlayer
@@ -105,6 +106,12 @@ def create_input_scene(world: esper.World) -> None:
     for name, key in mappings:
         entity = world.create_entity()
         world.add_component(entity, CInputCommand(name, key))
+
+
+def create_input_menu(world: esper.World) -> None:
+    for key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+        entity = world.create_entity()
+        world.add_component(entity, CInputCommand("MENU_START", key))
 
 
 def create_bullet_player(world: esper.World, bullet_cfg: dict,
@@ -316,3 +323,36 @@ def create_terrain(world: esper.World, world_cfg: dict,
     )
     world.add_component(entity, CTagTerrain())
     return entity, heights
+
+
+def create_score_popup(world: esper.World, screen_x: float, screen_y: float,
+                       points: int, font_path: str, size: int = 6) -> int:
+    entity = world.create_entity()
+    world.add_component(entity, CTransform(pygame.Vector2(screen_x, screen_y)))
+    c_text = CText(f"+{points}", font_path, size, (255, 255, 100))
+    world.add_component(entity, c_text)
+    world.add_component(entity, CLifetime(2.0))
+    return entity
+
+
+def create_play_game_state(world: esper.World, player_entity: int,
+                           score_entity: int | None, game_over_entity: int | None,
+                           screen_w: int, game_over_sound: str,
+                           lives: int = 3) -> int:
+    entity = world.create_entity()
+    world.add_component(entity, CPlayGameState(
+        player_entity, score_entity, game_over_entity,
+        screen_w, game_over_sound, lives
+    ))
+    return entity
+
+
+def create_astronaut_spawner(world: esper.World, spawn_times: list[float],
+                             astro_cfg: dict, world_width: int,
+                             terrain_heights: list[float], astro_sprite_h: int,
+                             screen_h: int) -> int:
+    entity = world.create_entity()
+    world.add_component(entity, CAstronautSpawner(
+        spawn_times, astro_cfg, world_width, terrain_heights, astro_sprite_h, screen_h
+    ))
+    return entity
