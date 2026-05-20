@@ -99,6 +99,8 @@ def create_input_scene(world: esper.World) -> None:
     mappings = [
         ("PAUSE", pygame.K_p),
         ("BACK_TO_MENU", pygame.K_BACKSPACE),
+        ("MENU_SELECT", pygame.K_RETURN),
+        ("MENU_SELECT", pygame.K_KP_ENTER),
     ]
     for name, key in mappings:
         entity = world.create_entity()
