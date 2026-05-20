@@ -271,3 +271,4 @@ chore: ignora carpeta dist/ en .gitignore
 - [NO] No usarlo como bitácora de tareas o changelog (eso va en `docs/`).
 - [NO] No duplicar diagramas de arquitectura aquí (van en
   [docs/02-arquitectura.md](02-arquitectura.md)).
+ 
