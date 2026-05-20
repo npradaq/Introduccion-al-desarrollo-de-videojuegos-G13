@@ -4,12 +4,15 @@ import esper
 import pygame
 
 from src.ecs.components.c_animation import CAnimation
+from src.ecs.components.c_astronaut_spawner import CAstronautSpawner
 from src.ecs.components.c_attach_to import CAttachTo
 from src.ecs.components.c_burner import CBurner
 from src.ecs.components.c_can_blink import CCanBlink
+from src.ecs.components.c_enemy_spawner import CEnemySpawner
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_parallax import CParallax
+from src.ecs.components.c_play_game_state import CPlayGameState
 from src.ecs.components.c_player_state import CPlayerState
 from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_terrain import CTerrain
@@ -91,6 +94,12 @@ def create_input_scene(world: esper.World) -> None:
     for name, key in mappings:
         entity = world.create_entity()
         world.add_component(entity, CInputCommand(name, key))
+
+
+def create_input_menu(world: esper.World) -> None:
+    for key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+        entity = world.create_entity()
+        world.add_component(entity, CInputCommand("MENU_START", key))
 
 
 def create_bullet_player(world: esper.World, bullet_cfg: dict,
@@ -320,6 +329,39 @@ def create_terrain(world: esper.World, world_cfg: dict,
     )
     world.add_component(entity, CTagTerrain())
     return entity, heights
+
+
+def create_play_game_state(world: esper.World, player_entity: int,
+                           score_entity: int | None, game_over_entity: int | None,
+                           screen_w: int, game_over_sound: str,
+                           lives: int = 3) -> int:
+    entity = world.create_entity()
+    world.add_component(entity, CPlayGameState(
+        player_entity, score_entity, game_over_entity,
+        screen_w, game_over_sound, lives
+    ))
+    return entity
+
+
+def create_astronaut_spawner(world: esper.World, spawn_times: list[float],
+                             astro_cfg: dict, world_width: int,
+                             terrain_heights: list[float], astro_sprite_h: int,
+                             screen_h: int) -> int:
+    entity = world.create_entity()
+    world.add_component(entity, CAstronautSpawner(
+        spawn_times, astro_cfg, world_width, terrain_heights, astro_sprite_h, screen_h
+    ))
+    return entity
+
+
+def create_enemy_spawner(world: esper.World, lander_cfg: dict,
+                         enemy_start_delay: float, world_width: int,
+                         screen_h: int) -> int:
+    entity = world.create_entity()
+    world.add_component(entity, CEnemySpawner(
+        lander_cfg, enemy_start_delay, world_width, screen_h
+    ))
+    return entity
 
 
 def create_mutant_enemy(world: esper.World, mutant_enemy_cfg: dict,
