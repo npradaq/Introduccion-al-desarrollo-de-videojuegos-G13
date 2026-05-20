@@ -214,6 +214,11 @@ class PlayScene(Scene):
             if c_input.phase == CommandPhase.START:
                 ServiceLocator.scenes_service.switch_to("MENU")
             return
+        elif c_input.name == "MENU_SELECT":
+            if c_input.phase == CommandPhase.START and self._game_over:
+                # Enter en pantalla de Game Over vuelve al menú principal.
+                ServiceLocator.scenes_service.switch_to("MENU")
+            return
 
         if self.is_paused or self._game_over or self.player_velocity is None:
             return

@@ -200,20 +200,20 @@ def system_player_crash(world: esper.World, explosion_cfg: dict) -> bool:
             return True
 
     # 2. Crash with terrain: if the bottom of the player goes below the terrain height.
-    # El jugador muere al tocar la superficie de la montaña.
-    for _, (c_terrain, _) in world.get_components(CTerrain, CTagTerrain):
-        terrain_x = int(p_transform.position.x) % c_terrain.world_width
-        terrain_y = c_terrain.heights[terrain_x]
-        player_bottom = p_transform.position.y + p_surface.area.h
-        if player_bottom >= terrain_y:
-            _player_explosion(
-                world,
-                p_transform.position + pygame.Vector2(
-                    p_surface.area.w / 2, p_surface.area.h / 2
-                ),
-                explosion_cfg,
-            )
-            return True
+    # Se desactiva esta parte: no termina el juego al tocar el terreno inferior.
+    # for _, (c_terrain, _) in world.get_components(CTerrain, CTagTerrain):
+    #     terrain_x = int(p_transform.position.x) % c_terrain.world_width
+    #     terrain_y = c_terrain.heights[terrain_x]
+    #     player_bottom = p_transform.position.y + p_surface.area.h
+    #     if player_bottom >= terrain_y:
+    #         _player_explosion(
+    #             world,
+    #             p_transform.position + pygame.Vector2(
+    #                 p_surface.area.w / 2, p_surface.area.h / 2
+    #             ),
+    #             explosion_cfg,
+    #         )
+    #         return True
 
     # 3. Do not check astronauts here, so landing on them does not kill the player.
     return False
