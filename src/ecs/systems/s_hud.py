@@ -10,6 +10,7 @@ from src.engine.service_locator import ServiceLocator
 
 def system_hud(world: esper.World, screen: pygame.Surface,
                interface_cfg: dict, lives: int) -> None:
+    # Dibuja la interfaz superior: fondo, texto, vidas e indicadores.
     hud_cfg = interface_cfg.get("hud", {})
     font_path = interface_cfg.get("font", "")
     header_h = hud_cfg.get("header_height", 32)
@@ -20,11 +21,13 @@ def system_hud(world: esper.World, screen: pygame.Surface,
     lc = hud_cfg.get("header_line_color", {"r": 0, "g": 0, "b": 255})
     pygame.draw.line(screen, (lc["r"], lc["g"], lc["b"]),
                      (0, header_h - 1), (screen_w, header_h - 1))
+    # La línea separa el HUD del área de juego.
 
     text_components = world.get_components(CTransform, CText)
     for _, (c_transform, c_text) in text_components:
         if not c_text.visible:
             continue
+        # Renderiza solo los textos visibles del HUD.
         if c_text.surface is None:
             font = ServiceLocator.fonts_service.get(c_text.font_path, c_text.size)
             c_text.surface = font.render(c_text.text, True, c_text.color)
@@ -38,6 +41,7 @@ def system_hud(world: esper.World, screen: pygame.Surface,
     ly = lives_cfg.get("y", 21)
     spacing = lives_cfg.get("spacing", 16)
     display_lives = max(0, lives - 1)
+    # Mostrar una vida menos porque la vida actual ya está en juego.
     for i in range(display_lives):
         screen.blit(lives_img, (lx + i * spacing, ly))
 

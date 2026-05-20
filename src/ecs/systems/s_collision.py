@@ -20,8 +20,10 @@ from src.engine.service_locator import ServiceLocator
 
 def _spawn_explosion(world: esper.World, position: pygame.Vector2,
                      explosion_cfg: dict) -> None:
+    # Crea partículas de explosión usando la configuración de efecto.
     speed = explosion_cfg.get("particle_speed", 60)
     max_dist = explosion_cfg.get("max_distance", 24)
+    # particle_speed afecta la rapidez de las partículas.
     color_cfg = explosion_cfg.get("color", {"r": 255, "g": 255, "b": 255})
     color = pygame.Color(color_cfg["r"], color_cfg["g"], color_cfg["b"])
     lifetime = max_dist / max(speed, 1)
@@ -37,12 +39,14 @@ def _spawn_explosion(world: esper.World, position: pygame.Vector2,
 
 def _free_captured_astronaut(world: esper.World, astro_id: int,
                               falling_velocity: float, sound_fall: str) -> None:
+    # Libera al astronauta capturado cuando el lander es destruido.
     try:
         astro_state = world.component_for_entity(astro_id, CAstronautState)
     except Exception:
         return
     if astro_state.phase != AstronautPhase.CAPTURED:
         return
+    # falling_velocity controla qué tan rápido cae el astronauta liberado.
     astro_state.phase = AstronautPhase.RESCUED
     world.component_for_entity(astro_id, CVelocity).velocity.y = falling_velocity
     if sound_fall:
@@ -52,9 +56,11 @@ def _free_captured_astronaut(world: esper.World, astro_id: int,
 def system_collision(world: esper.World, explosion_cfg: dict,
                      lander_cfg: dict, mutant_cfg: dict,
                      astronaut_cfg: dict, points_per_enemy: int) -> int:
+    # Detecta colisiones entre balas del jugador y enemigos.
     score_delta = 0
     bullets_to_delete: set[int] = set()
     enemies_to_delete: dict[int, bool] = {}  # entity -> is_lander
+    # points_per_enemy define el puntaje que da cada enemigo destruido.
 
     bullet_rects: list[tuple[int, pygame.Rect]] = []
     for b_ent, (bt, bs) in world.get_components(CTransform, CSurface):
@@ -77,6 +83,7 @@ def system_collision(world: esper.World, explosion_cfg: dict,
         for b_ent, b_rect in bullet_rects:
             if b_ent in bullets_to_delete:
                 continue
+            # Comparar la bala con el rectángulo del enemigo.
             if e_rect.colliderect(b_rect):
                 bullets_to_delete.add(b_ent)
                 enemies_to_delete[e_ent] = etag.enemy_type
@@ -96,6 +103,7 @@ def system_collision(world: esper.World, explosion_cfg: dict,
 
     # Free astronauts from killed landers before deleting the entity
     falling_vel = astronaut_cfg.get("falling_velocity", 60)
+    # falling_velocity define la velocidad de caída cuando un astronauta es liberado.
     sound_fall = astronaut_cfg.get("sound_fall", "")
     for e_ent, enemy_type in enemies_to_delete.items():
         if enemy_type == "Lander" and world.has_component(e_ent, CLanderState):
@@ -119,6 +127,7 @@ def _player_explosion(world: esper.World, position: pygame.Vector2,
 
 
 def system_player_bullet_hits_captured_astronaut(world: esper.World) -> bool:
+    # Detecta si el jugador dispara a un astronauta capturado.
     bullets_to_delete: set[int] = set()
     bullet_rects: list[tuple[int, pygame.Rect]] = []
     for b_ent, (bt, bs) in world.get_components(CTransform, CSurface):
@@ -130,6 +139,7 @@ def system_player_bullet_hits_captured_astronaut(world: esper.World) -> bool:
 
     if not bullet_rects:
         return False
+    # No hay balas del jugador, no hay penalización.
 
     captured_astro_entities = []
     for astro_ent, (at, asurf, astate) in world.get_components(
@@ -155,7 +165,8 @@ def system_player_bullet_hits_captured_astronaut(world: esper.World) -> bool:
 
 
 def system_player_crash(world: esper.World, explosion_cfg: dict) -> bool:
-    # Find the player entity and its visual bounds.
+    # Detecta si el jugador choca con un enemigo o con el terreno.
+    # explosion_cfg controla el efecto visual de la explosión.
     players = list(world.get_components(CTransform, CSurface, CTagPlayer))
     if not players:
         return False
@@ -189,6 +200,7 @@ def system_player_crash(world: esper.World, explosion_cfg: dict) -> bool:
             return True
 
     # 2. Crash with terrain: if the bottom of the player goes below the terrain height.
+    # El jugador muere al tocar la superficie de la montaña.
     for _, (c_terrain, _) in world.get_components(CTerrain, CTagTerrain):
         terrain_x = int(p_transform.position.x) % c_terrain.world_width
         terrain_y = c_terrain.heights[terrain_x]
