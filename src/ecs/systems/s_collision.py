@@ -51,6 +51,26 @@ def _free_captured_astronaut(world: esper.World, astro_id: int,
         return
     # falling_velocity controla qué tan rápido cae el astronauta liberado.
     astro_state.phase = AstronautPhase.RESCUED
+
+    try:
+        astro_transform = world.component_for_entity(astro_id, CTransform)
+        astro_surface = world.component_for_entity(astro_id, CSurface)
+    except Exception:
+        astro_transform = None
+        astro_surface = None
+
+    if astro_transform is not None and astro_surface is not None:
+        terrain_y = None
+        for _, (c_terrain,) in world.get_components(CTerrain,):
+            if c_terrain.heights:
+                x_index = int(astro_transform.position.x)
+                x_index = max(0, min(x_index, len(c_terrain.heights) - 1))
+                terrain_y = c_terrain.heights[x_index]
+                break
+
+        if terrain_y is not None:
+            astro_state.land_y = terrain_y - astro_surface.area.h
+
     world.component_for_entity(astro_id, CVelocity).velocity.y = falling_velocity
     if sound_fall:
         ServiceLocator.sounds_service.play(sound_fall)
