@@ -28,6 +28,8 @@ from src.ecs.systems.s_blink import system_blink
 from src.ecs.systems.s_burner import system_burner
 from src.ecs.systems.s_collision import (
     system_collision,
+    system_bullet_pod_collision, 
+    system_enemy_bomb_player_collision,
     system_enemy_bullet_player_collision,
     system_player_bullet_hits_captured_astronaut,
     system_player_crash,
