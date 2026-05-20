@@ -10,9 +10,11 @@ from src.ecs.components.Enemy.c_chase import CChase
 from src.ecs.components.Enemy.c_fixed_enemy_spawner import CEnemySpawner
 from src.ecs.components.Enemy.c_lander_state import CLanderState
 from src.ecs.components.Enemy.c_mutant_state import CMutantState
+from src.ecs.components.Enemy.c_pod_state import CPodState
 from src.ecs.components.Enemy.c_random_enemy_spawner import CRandomEnemySpawner
 from src.ecs.components.Enemy.c_shoot_delay import CShootDelay
 from src.ecs.components.Enemy.c_steer import CSteer
+from src.ecs.components.Enemy.c_swarmer_state import CSwarmerState
 from src.ecs.components.c_animation import CAnimation
 from src.ecs.components.tags.c_tag_enemy import CTagEnemy
 from src.ecs.components.tags.c_tag_enemy_bomb import CTagEnemyBomb
@@ -60,10 +62,12 @@ def _create_enemy_baiter(world: esper.World, enemy_entity: int, enemy_info: dict
                                                   enemy_info["shoot_detection_distance"], enemy_info["bullet_velocity"]))
 
 def _create_enemy_pod(world: esper.World, enemy_entity: int, enemy_info: dict):
-    pass
+    world.add_component(enemy_entity, CPodState(enemy_info["swarmer_count"]))
 
 def _create_enemy_swarmer(world: esper.World, enemy_entity: int, enemy_info: dict):
-    pass
+    world.add_component(enemy_entity, CSwarmerState())
+    world.add_component(enemy_entity, CShootDelay(enemy_info["fire_rate"], enemy_info["acuracy_radius"],
+                                                  enemy_info["shoot_detection_distance"], enemy_info["bullet_velocity"]))
 
 def _create_enemy_bomber(world: esper.World, enemy_entity: int, enemy_info: dict):
     world.add_component(enemy_entity, CBomberState())
@@ -82,6 +86,12 @@ def create_enemy_bullet(world: esper.World, pos: pygame.Vector2, direction: pyga
     bullet_entity = create_sprite(world, pos, direction, bullet_surface)
     world.add_component(bullet_entity, CTagEnemyBullet())
     world.add_component(bullet_entity, CTagEnemy("Bullet"))
+    
+def spawn_swarmers_on_pod_death(world: esper.World, pos: pygame.Vector2, swarmer_count:int):
+    swarmer_data = ServiceLocator.config_service.get("assets/cfg/enemies.json")["Swarmer"]
+    for _ in range(swarmer_count):
+        offset = pygame.Vector2(random.uniform(-10, 10), random.uniform(-10, 10))
+        create_enemy(world, pos + offset, swarmer_data, "Swarmer")
 
 def create_fixed_enemy_spawner(world: esper.World, spawn_events: list[dict], enemy_data: dict):
     spawner_entity = world.create_entity()

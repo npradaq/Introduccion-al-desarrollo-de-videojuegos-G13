@@ -1,7 +1,9 @@
 import esper
 import pygame
 
+from src.create.prefab_creator_enemy import spawn_swarmers_on_pod_death
 from src.ecs.components.Enemy.c_lander_state import CLanderState, LanderState
+from src.ecs.components.Enemy.c_pod_state import CPodState
 from src.ecs.components.c_astronaut_state import AstronautPhase, CAstronautState
 from src.ecs.components.c_lifetime import CLifetime
 from src.ecs.components.c_surface import CSurface
@@ -73,8 +75,10 @@ def system_collision(world: esper.World, explosion_cfg: dict,
         is_baiter = etag.enemy_type == "Baiter"
         is_bomb = etag.enemy_type == "Bomb"
         is_bullet = etag.enemy_type == "Bullet"
+        is_swarmer = etag.enemy_type == "Swarmer"
         is_enemy = (is_lander or is_mutant or is_bomber 
-                    or is_baiter or is_bomb or is_bullet) 
+                    or is_baiter or is_bomb or is_bullet
+                    or is_swarmer) 
         if not (is_enemy):
             continue
         if e_ent in enemies_to_delete:
@@ -151,3 +155,25 @@ def system_enemy_bomb_player_collision(world: esper.World, explosion_cfg: dict) 
                 _spawn_explosion(world, pos, explosion_cfg)
                 
                 #TODO: Handle player damage or death here
+                
+def system_bullet_pod_collision(world: esper.World, explosion_cfg: dict) -> None:
+    bullet_components = world.get_components(CTransform, CSurface, CTagBulletPlayer)
+    pod_components = world.get_components(CTransform, CSurface, CPodState)
+    
+    for b_ent, (b_transform, b_surface, _) in bullet_components:
+        bullet_rect = pygame.Rect(int(b_transform.position.x), int(b_transform.position.y),
+                                  b_surface.area.w, b_surface.area.h)
+        
+        for p_ent, (p_transform, p_surface, c_ps) in pod_components:
+            pod_rect = pygame.Rect(int(p_transform.position.x), int(p_transform.position.y),
+                                      p_surface.area.w, p_surface.area.h)
+            
+            if bullet_rect.colliderect(pod_rect):
+                world.delete_entity(b_ent)
+                world.delete_entity(p_ent)
+                
+                _spawn_explosion(world, p_transform.position.copy(), explosion_cfg)
+                
+                spawn_swarmers_on_pod_death(world, p_transform.position.copy(), c_ps.swarmer_count)
+                
+                
